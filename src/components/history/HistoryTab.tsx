@@ -53,7 +53,7 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
-        <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>{list.length} ejecuciones</span>
+        <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>{list.length} {list.length === 1 ? "ejecución" : "ejecuciones"}</span>
         <button
           onClick={() => { void clear(serviceId); setSelectedId(null); }}
           disabled={list.length === 0}
@@ -113,7 +113,11 @@ function HistoryDetail({ entry, resending, onResend }: { entry: HistoryEntry; re
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
         <span className="mono" style={{ fontSize: 11.5, color: statusColor(entry.status) }}>
-          {entry.status != null ? `${entry.status} ${entry.statusText}` : `Error: ${entry.error ?? "red"}`} · {entry.timeMs} ms · {entry.sizeBytes} B
+          {entry.status != null
+            ? `${entry.status} ${entry.statusText}`
+            : entry.error
+            ? `Error: ${entry.error}`
+            : "Error de red"} · {entry.timeMs} ms · {entry.sizeBytes} B
         </span>
         <button
           onClick={onResend}
