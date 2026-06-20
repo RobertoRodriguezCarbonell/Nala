@@ -58,6 +58,9 @@ pub fn run() {
             api::set_auth_strategy,
             api::set_environment_secret,
             api::clear_environment_secret,
+            api::authenticate,
+            api::reauthenticate,
+            api::forget_credentials,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");

@@ -5,7 +5,7 @@ use tauri::State;
 
 use crate::error::AppError;
 use crate::models::{
-    AuthStatus, Environment, EnvironmentInput, HttpRequestInput, HttpResponse, ImportResult,
+    AuthStatus, Environment, EnvironmentInput, Header, HttpRequestInput, HttpResponse, ImportResult,
     Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
 };
 use crate::openapi::{self, NormalizedSpec};
@@ -260,6 +260,126 @@ pub fn clear_environment_secret(
 ) -> Result<(), AppError> {
     let conn = state.db.lock().expect("db lock");
     store::clear_environment_secret(&conn, environment_id)
+}
+
+/// Ejecuta el login (construir → enviar → extraer token → cifrar → persistir).
+/// El token y las credenciales en claro solo viven aquí en memoria.
+async fn do_login(
+    state: &State<'_, AppState>,
+    service_id: i64,
+    environment_id: i64,
+    user: String,
+    pass: String,
+    remember: bool,
+) -> Result<AuthStatus, AppError> {
+    // 1) Config de login + base URL bajo lock.
+    let (config_str, base_url) = {
+        let conn = state.db.lock().expect("db lock");
+        let (kind, config) = store::get_auth_strategy(&conn, service_id)?;
+        if kind != "login" {
+            return Err(AppError::Other("la estrategia del servicio no es login".into()));
+        }
+        let env = store::get_environment(&conn, environment_id)?;
+        (config, env.base_url)
+    };
+    let config: Value = serde_json::from_str(&config_str).unwrap_or_else(|_| serde_json::json!({}));
+    let get = |k: &str, d: &str| config.get(k).and_then(|v| v.as_str()).unwrap_or(d).to_string();
+    let method = get("method", "POST");
+    let path = get("path", "/auth/login");
+    let content_type = get("contentType", "form");
+    let user_field = get("userField", "username");
+    let pass_field = get("passField", "password");
+    let token_path = get("tokenPath", "access_token");
+
+    // 2) Construir y enviar el login (sin lock).
+    let (body, ct_header) =
+        login::build_login_body(&content_type, &user_field, &pass_field, &user, &pass);
+    let resp = http::send_request(HttpRequestInput {
+        method,
+        url: format!("{base_url}{path}"),
+        headers: vec![Header { name: "Content-Type".into(), value: ct_header }],
+        body: Some(body),
+        auth: None,
+    })
+    .await?;
+
+    if !(200..300).contains(&resp.status) {
+        return Err(AppError::Other(format!(
+            "login falló: {} {}",
+            resp.status, resp.status_text
+        )));
+    }
+    let value: Value = serde_json::from_str(&resp.body)
+        .map_err(|_| AppError::Other("la respuesta de login no es JSON".into()))?;
+    let token = login::extract_token(&value, &token_path)
+        .ok_or_else(|| AppError::Other(format!("no se encontró el token en \"{token_path}\"")))?;
+    let now = login::now_epoch();
+    let expires_at =
+        login::expiry_from_response(&value, now).or_else(|| login::expiry_from_jwt(&token));
+
+    // 3) Persistir token (+ credenciales si remember) y devolver estado, bajo lock.
+    let status = {
+        let conn = state.db.lock().expect("db lock");
+        let token_cipher = crypto::encrypt(&token)?;
+        store::set_environment_token(&conn, environment_id, &token_cipher, expires_at)?;
+        if remember {
+            let creds = serde_json::json!({ "user": user, "pass": pass }).to_string();
+            let creds_cipher = crypto::encrypt(&creds)?;
+            store::set_environment_credentials(&conn, environment_id, Some(&creds_cipher), true)?;
+        } else {
+            store::set_environment_credentials(&conn, environment_id, None, false)?;
+        }
+        build_auth_status(&conn, service_id, Some(environment_id))?
+    };
+    Ok(status)
+}
+
+/// Ejecuta el login con credenciales tecleadas.
+#[tauri::command]
+pub async fn authenticate(
+    state: State<'_, AppState>,
+    service_id: i64,
+    environment_id: i64,
+    user: String,
+    pass: String,
+    remember: bool,
+) -> Result<AuthStatus, AppError> {
+    do_login(&state, service_id, environment_id, user, pass, remember).await
+}
+
+/// Reautentica con las credenciales recordadas del entorno.
+#[tauri::command]
+pub async fn reauthenticate(
+    state: State<'_, AppState>,
+    service_id: i64,
+    environment_id: i64,
+) -> Result<AuthStatus, AppError> {
+    let (user, pass) = {
+        let conn = state.db.lock().expect("db lock");
+        let row = store::get_environment_auth(&conn, environment_id)?;
+        let cipher = row
+            .credentials
+            .ok_or_else(|| AppError::Other("no hay credenciales recordadas".into()))?;
+        let json = crypto::decrypt(&cipher)?;
+        let v: Value = serde_json::from_str(&json)
+            .map_err(|_| AppError::Other("credenciales corruptas".into()))?;
+        let user = v.get("user").and_then(|x| x.as_str()).unwrap_or("").to_string();
+        let pass = v.get("pass").and_then(|x| x.as_str()).unwrap_or("").to_string();
+        (user, pass)
+    };
+    do_login(&state, service_id, environment_id, user, pass, true).await
+}
+
+/// Olvida las credenciales recordadas de un entorno (no toca el token).
+#[tauri::command]
+pub fn forget_credentials(
+    state: State<AppState>,
+    service_id: i64,
+    environment_id: i64,
+) -> Result<AuthStatus, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::set_environment_credentials(&conn, environment_id, None, false)?;
+    build_auth_status(&conn, service_id, Some(environment_id))
 }
 
 // ---------- Envío HTTP ----------
