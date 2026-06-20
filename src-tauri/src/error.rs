@@ -10,6 +10,15 @@ pub enum AppError {
     #[error("error de keychain: {0}")]
     Keyring(#[from] keyring::Error),
 
+    #[error("error de red: {0}")]
+    Http(String),
+
+    #[error("OpenAPI no válido: {0}")]
+    Spec(String),
+
+    #[error("no encontrado: {0}")]
+    NotFound(String),
+
     // Se usará en fases posteriores (validación, OpenAPI, HTTP).
     #[allow(dead_code)]
     #[error("{0}")]

@@ -1,0 +1,89 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Mesero API", "version": "1.2.0" },
+  "paths": {
+    "/reservas": {
+      "get": {
+        "tags": ["reservas"],
+        "summary": "Lista reservas",
+        "operationId": "list_reservas",
+        "parameters": [
+          { "name": "estado", "in": "query", "required": false, "schema": { "type": "string", "enum": ["pendiente", "confirmada", "cancelada"] } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100 } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "tags": ["reservas"],
+        "summary": "Crea una reserva",
+        "operationId": "crear_reserva",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReservaCreate" } } }
+        },
+        "responses": { "201": { "description": "Creada" } }
+      }
+    },
+    "/reservas/{id}": {
+      "get": {
+        "tags": ["reservas"],
+        "summary": "Detalle de reserva",
+        "operationId": "get_reserva",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "No existe" } }
+      },
+      "delete": {
+        "tags": ["reservas"],
+        "summary": "Anula una reserva",
+        "operationId": "anular_reserva",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "204": { "description": "Anulada" } }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Inicia sesión",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginInput" } } }
+        },
+        "responses": { "200": { "description": "Token" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Contacto": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "telefono": { "type": "string" }
+        }
+      },
+      "ReservaCreate": {
+        "type": "object",
+        "required": ["cliente", "personas"],
+        "properties": {
+          "cliente": { "type": "string" },
+          "personas": { "type": "integer", "minimum": 1 },
+          "mesa_preferida": { "type": "string", "enum": ["interior", "terraza", "barra"] },
+          "confirmada": { "type": "boolean", "default": false },
+          "acompanantes": { "type": "array", "items": { "type": "string" } },
+          "contacto": { "$ref": "#/components/schemas/Contacto" },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
+        }
+      },
+      "LoginInput": {
+        "type": "object",
+        "required": ["usuario", "password"],
+        "properties": {
+          "usuario": { "type": "string" },
+          "password": { "type": "string", "format": "password" }
+        }
+      }
+    }
+  }
+}
