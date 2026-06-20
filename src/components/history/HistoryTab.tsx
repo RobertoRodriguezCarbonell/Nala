@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { useHistoryStore } from "../../store/historyStore";
+import { useConfirmStore } from "../../store/confirmStore";
 import { methodColor } from "../MethodBadge";
 import type { HistoryEntry } from "../../types/http";
 
@@ -26,6 +27,7 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
   const entries = useHistoryStore((s) => s.byService[serviceId]);
   const load = useHistoryStore((s) => s.load);
   const clear = useHistoryStore((s) => s.clear);
+  const confirm = useConfirmStore((s) => s.confirm);
 
   useEffect(() => {
     void load(serviceId);
@@ -55,7 +57,14 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
       <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
         <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>{list.length} {list.length === 1 ? "ejecución" : "ejecuciones"}</span>
         <button
-          onClick={() => { void clear(serviceId); setSelectedId(null); }}
+          onClick={() =>
+            confirm({
+              title: "Limpiar historial",
+              message: "Se borrarán todas las ejecuciones registradas de este servicio.",
+              confirmLabel: "Limpiar",
+              onConfirm: () => { setSelectedId(null); return clear(serviceId); },
+            })
+          }
           disabled={list.length === 0}
           style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "5px 11px", borderRadius: "var(--radius-control)", border: "0.5px solid var(--border-control)", background: "transparent", color: list.length === 0 ? "var(--text-disabled)" : "var(--status-5xx)", cursor: list.length === 0 ? "default" : "pointer" }}
         >

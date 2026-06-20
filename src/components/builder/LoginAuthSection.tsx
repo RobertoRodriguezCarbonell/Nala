@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
+import { useConfirmStore } from "../../store/confirmStore";
 import type { AuthStatus, LoginConfig } from "../../types/http";
 
 const labelStyle: React.CSSProperties = {
@@ -70,6 +71,7 @@ export function LoginAuthSection({
   const saveStrategy = useAuthStore((s) => s.saveStrategy);
   const authenticate = useAuthStore((s) => s.authenticate);
   const forgetCredentials = useAuthStore((s) => s.forgetCredentials);
+  const confirm = useConfirmStore((s) => s.confirm);
 
   const cfg = (status?.config ?? {}) as LoginConfig;
   const path = cfg.path ?? "/auth/login";
@@ -193,7 +195,17 @@ export function LoginAuthSection({
               {status?.hasCredentials && (
                 <>
                   <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>•••• credenciales recordadas</span>
-                  <button onClick={() => void forgetCredentials(serviceId, environmentId)} style={{ ...textBtn, color: "var(--status-5xx)" }}>Olvidar</button>
+                  <button
+                    onClick={() =>
+                      confirm({
+                        title: "Olvidar credenciales",
+                        message: "Se olvidarán las credenciales guardadas de este entorno.",
+                        confirmLabel: "Olvidar",
+                        onConfirm: () => forgetCredentials(serviceId, environmentId),
+                      })
+                    }
+                    style={{ ...textBtn, color: "var(--status-5xx)" }}
+                  >Olvidar</button>
                 </>
               )}
             </div>

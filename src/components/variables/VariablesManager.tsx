@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useVariablesStore } from "../../store/variablesStore";
 import { useServicesStore } from "../../store/servicesStore";
+import { useConfirmStore } from "../../store/confirmStore";
 import type { VariableScope } from "../../types/http";
 
 /**
@@ -10,6 +11,7 @@ import type { VariableScope } from "../../types/http";
 export function VariablesManager() {
   const { variables, closeManager, load, save, remove } = useVariablesStore();
   const { activeServiceId, activeEnvironmentId, services } = useServicesStore();
+  const confirm = useConfirmStore((s) => s.confirm);
 
   const serviceName = services.find((s) => s.id === activeServiceId)?.name ?? "servicio";
 
@@ -60,7 +62,14 @@ export function VariablesManager() {
                 <span className="mono" style={{ fontSize: 12, color: "var(--accent-var)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v.key}</span>
                 <span className="mono" style={{ fontSize: 12, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v.isSecret ? "••••" : v.value}</span>
                 <span
-                  onClick={() => void remove(v.id, activeServiceId ?? undefined, activeEnvironmentId ?? undefined)}
+                  onClick={() =>
+                    confirm({
+                      title: "Eliminar variable",
+                      message: `Se eliminará la variable «${v.key}».`,
+                      confirmLabel: "Eliminar",
+                      onConfirm: () => remove(v.id, activeServiceId ?? undefined, activeEnvironmentId ?? undefined),
+                    })
+                  }
                   style={{ display: "flex", justifyContent: "center", color: "var(--text-disabled)", cursor: "pointer" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "var(--status-5xx)")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-disabled)")}

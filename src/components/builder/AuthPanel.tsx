@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { useServicesStore } from "../../store/servicesStore";
+import { useConfirmStore } from "../../store/confirmStore";
 import type { AuthKind } from "../../types/http";
 import { LoginAuthSection } from "./LoginAuthSection";
 
@@ -46,6 +47,7 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
   const saveStrategy = useAuthStore((s) => s.saveStrategy);
   const saveSecret = useAuthStore((s) => s.saveSecret);
   const clearSecret = useAuthStore((s) => s.clearSecret);
+  const confirm = useConfirmStore((s) => s.confirm);
 
   // Selecciona el mapa estable y deriva en render (evita devolver un array
   // nuevo desde el selector, que en zustand v5 dispara avisos de getSnapshot).
@@ -167,7 +169,14 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
                 Reemplazar
               </button>
               <button
-                onClick={() => void clearSecret(serviceId, env.id)}
+                onClick={() =>
+                  confirm({
+                    title: "Borrar secreto",
+                    message: "Se borrará el secreto guardado de este entorno.",
+                    confirmLabel: "Borrar",
+                    onConfirm: () => clearSecret(serviceId, env.id),
+                  })
+                }
                 style={{ ...textBtn, color: "var(--status-5xx)" }}
               >
                 Borrar
