@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { useServicesStore, opKey } from "../../store/servicesStore";
 import { useRequestStore } from "../../store/requestStore";
+import { useConfirmStore } from "../../store/confirmStore";
 import { ChevronIcon, FolderClosedIcon, PlusIcon, RefreshIcon } from "../icons";
 import { MethodBadge } from "../MethodBadge";
 import type { Operation } from "../../types/openapi";
@@ -21,8 +23,23 @@ export function Sidebar() {
     selectService,
     selectOperation,
     refreshActiveService,
+    removeService,
   } = useServicesStore();
   const openTab = useRequestStore((s) => s.openTab);
+
+  const confirm = useConfirmStore((s) => s.confirm);
+  const [hoverId, setHoverId] = useState<number | null>(null);
+  const [menuId, setMenuId] = useState<number | null>(null);
+
+  // Cierra el menú kebab al hacer clic fuera o con Escape.
+  useEffect(() => {
+    if (menuId == null) return;
+    const onClick = () => setMenuId(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuId(null); };
+    window.addEventListener("click", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("click", onClick); window.removeEventListener("keydown", onKey); };
+  }, [menuId]);
 
   const totalEndpoints = services.reduce((n, s) => n + (specs[s.id]?.operations.length ?? 0), 0);
 
@@ -79,7 +96,7 @@ export function Sidebar() {
             const spec = specs[svc.id];
             const ops = spec?.operations ?? [];
             return (
-              <div key={svc.id}>
+              <div key={svc.id} style={{ position: "relative" }}>
                 <div
                   onClick={() => { selectService(svc.id); toggleExpand(svc.id); }}
                   className="svc-row"
@@ -92,8 +109,8 @@ export function Sidebar() {
                     fontSize: 12.5,
                     color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-row-hover)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-row-hover)"; setHoverId(svc.id); }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; setHoverId(null); }}
                 >
                   <span style={{ display: "flex", transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .12s" }}>
                     <ChevronIcon />
@@ -125,12 +142,53 @@ export function Sidebar() {
                           <RefreshIcon />
                         </span>
                       )}
-                      <span className="mono" style={{ fontSize: 10, color: "var(--text-disabled)", marginLeft: isActive ? 8 : "auto" }}>
-                        {ops.length}
-                      </span>
+                      {hoverId === svc.id || menuId === svc.id ? (
+                        <span
+                          title="Acciones"
+                          onClick={(e) => { e.stopPropagation(); setMenuId(menuId === svc.id ? null : svc.id); }}
+                          style={{ marginLeft: isActive ? 8 : "auto", color: "var(--text-faint)", display: "flex", cursor: "pointer" }}
+                          onMouseEnter={(ev) => (ev.currentTarget.style.color = "var(--text-primary)")}
+                          onMouseLeave={(ev) => (ev.currentTarget.style.color = "var(--text-faint)")}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+                            <circle cx="8" cy="3" r="1.3" />
+                            <circle cx="8" cy="8" r="1.3" />
+                            <circle cx="8" cy="13" r="1.3" />
+                          </svg>
+                        </span>
+                      ) : (
+                        <span className="mono" style={{ fontSize: 10, color: "var(--text-disabled)", marginLeft: isActive ? 8 : "auto" }}>
+                          {ops.length}
+                        </span>
+                      )}
                     </>
                   )}
                 </div>
+
+                {menuId === svc.id && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ position: "absolute", right: 8, top: 30, zIndex: 50, background: "var(--bg-raised)", border: "0.5px solid var(--border-strong)", borderRadius: 6, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", padding: 4, minWidth: 160 }}
+                  >
+                    <div
+                      onClick={() => {
+                        setMenuId(null);
+                        confirm({
+                          title: "Eliminar servicio",
+                          message: `Se borrará «${svc.name}» y, en cascada, sus entornos, snapshots, credenciales e historial. No se puede deshacer.`,
+                          confirmLabel: "Eliminar",
+                          requireText: svc.name,
+                          onConfirm: () => removeService(svc.id),
+                        });
+                      }}
+                      style={{ padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--status-5xx)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-row-hover)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      Eliminar servicio
+                    </div>
+                  </div>
+                )}
 
                 {isOpen && (
                   <div>
