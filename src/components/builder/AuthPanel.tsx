@@ -104,6 +104,7 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
         {kind === "apiKey" && (
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
             <input
+              key={apiKeyName}
               defaultValue={apiKeyName}
               onBlur={(e) => onApiKey(e.target.value.trim() || "X-API-Key", apiKeyIn)}
               placeholder="Nombre del parámetro"
