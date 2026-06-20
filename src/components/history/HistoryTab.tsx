@@ -107,12 +107,12 @@ function HistoryRow({ entry, selected, onClick }: { entry: HistoryEntry; selecte
 
 function HistoryDetail({ entry, resending, onResend }: { entry: HistoryEntry; resending: boolean; onResend: () => void }) {
   const sec: CSSProperties = { fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--text-faint)", letterSpacing: "0.5px", padding: "10px 12px 4px" };
-  const pre: CSSProperties = { margin: 0, padding: "4px 12px 10px", fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--text-secondary)", whiteSpace: "pre-wrap", wordBreak: "break-all" };
+  const pre: CSSProperties = { margin: 0, padding: "4px 12px 10px", fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--text-secondary)", whiteSpace: "pre-wrap", overflowWrap: "anywhere" };
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
-        <span className="mono" style={{ fontSize: 11.5, color: statusColor(entry.status) }}>
+        <span className="mono" style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11.5, color: statusColor(entry.status) }}>
           {entry.status != null
             ? `${entry.status} ${entry.statusText}`
             : entry.error
@@ -122,7 +122,7 @@ function HistoryDetail({ entry, resending, onResend }: { entry: HistoryEntry; re
         <button
           onClick={onResend}
           disabled={resending}
-          style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "5px 13px", borderRadius: "var(--radius-control)", border: "none", background: "var(--accent)", color: "var(--bg-app)", cursor: resending ? "default" : "pointer", opacity: resending ? 0.6 : 1 }}
+          style={{ flex: "none", marginLeft: 10, fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "5px 13px", borderRadius: "var(--radius-control)", border: "none", background: "var(--accent)", color: "var(--bg-app)", cursor: resending ? "default" : "pointer", opacity: resending ? 0.6 : 1 }}
         >
           {resending ? "Reenviando…" : "Reenviar"}
         </button>

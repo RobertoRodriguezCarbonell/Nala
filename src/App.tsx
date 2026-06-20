@@ -12,6 +12,7 @@ import { useVariablesStore } from "./store/variablesStore";
 
 export default function App() {
   const boot = useUiStore((s) => s.boot);
+  const serviceView = useUiStore((s) => s.serviceView);
   const initServices = useServicesStore((s) => s.init);
   const wizardOpen = useServicesStore((s) => s.wizardOpen);
   const variablesOpen = useVariablesStore((s) => s.open);
@@ -28,7 +29,7 @@ export default function App() {
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar />
         <CenterPanel />
-        <ResponsePanel />
+        {serviceView !== "history" && <ResponsePanel />}
       </div>
       {wizardOpen && <AddServiceWizard />}
       {variablesOpen && <VariablesManager />}

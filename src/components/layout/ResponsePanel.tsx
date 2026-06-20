@@ -7,7 +7,7 @@ import { ResponseViewer } from "../response/ResponseViewer";
  */
 export function ResponsePanel() {
   return (
-    <div style={{ width: 480, flex: "none", display: "flex", flexDirection: "column", background: "var(--bg-app)", minHeight: 0 }}>
+    <div style={{ flex: "0 1 480px", minWidth: 360, display: "flex", flexDirection: "column", background: "var(--bg-app)", minHeight: 0 }}>
       <ReauthBanner />
       <ResponseViewer />
     </div>
