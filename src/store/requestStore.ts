@@ -233,7 +233,13 @@ export const useRequestStore = create<RequestState>((set, get) => ({
 
     patch(id, { sending: true, error: null });
     try {
-      const response = await sendRequest({ method: tab.method, url, headers, body });
+      const response = await sendRequest({
+        method: tab.method,
+        url,
+        headers,
+        body,
+        auth: env?.id != null ? { serviceId: tab.serviceId, environmentId: env.id } : null,
+      });
       patch(id, { sending: false, response, responseTab: "body" });
     } catch (err) {
       patch(id, { sending: false, error: typeof err === "string" ? err : String(err) });

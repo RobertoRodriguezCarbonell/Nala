@@ -3,6 +3,7 @@ import { useServicesStore } from "../../store/servicesStore";
 import { methodColor } from "../MethodBadge";
 import { RowsEditor } from "./RowsEditor";
 import { SchemaForm } from "./SchemaForm";
+import { AuthPanel } from "./AuthPanel";
 import type { BuilderTab } from "../../store/requestStore";
 import type { Operation } from "../../types/openapi";
 
@@ -117,11 +118,7 @@ export function RequestBuilder() {
           <RowsEditor rows={st.headers} onChange={(rows) => patch(tab.id, { headers: rows })} />
         )}
 
-        {st.builderTab === "auth" && (
-          <div className="mono" style={{ fontSize: 12, color: "var(--text-faint)", padding: "18px 14px" }}>
-            La autenticación (Bearer, API key, login) llega en la Fase 4.
-          </div>
-        )}
+        {st.builderTab === "auth" && <AuthPanel serviceId={tab.serviceId} />}
       </div>
     </div>
   );
