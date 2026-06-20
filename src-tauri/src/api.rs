@@ -300,6 +300,7 @@ async fn do_login(
         headers: vec![Header { name: "Content-Type".into(), value: ct_header }],
         body: Some(body),
         auth: None,
+        meta: None,
     })
     .await?;
 

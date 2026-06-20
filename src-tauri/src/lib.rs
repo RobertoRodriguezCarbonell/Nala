@@ -4,6 +4,7 @@ mod commands;
 mod crypto;
 mod db;
 mod error;
+mod history;
 mod http;
 mod keychain;
 mod login;

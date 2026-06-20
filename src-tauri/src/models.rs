@@ -111,6 +111,14 @@ pub struct AuthContext {
     pub environment_id: i64,
 }
 
+/// Contexto de logging: a qué servicio/entorno pertenece la petición (historial).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestMeta {
+    pub service_id: i64,
+    pub environment_id: Option<i64>,
+}
+
 /// Petición HTTP ya resuelta (URL e interpolación hechas en el frontend).
 /// `auth` es opcional: si llega, Rust inyecta la credencial antes de enviar.
 #[derive(Debug, Clone, Deserialize)]
@@ -123,6 +131,8 @@ pub struct HttpRequestInput {
     pub body: Option<String>,
     #[serde(default)]
     pub auth: Option<AuthContext>,
+    #[serde(default)]
+    pub meta: Option<RequestMeta>,
 }
 
 /// Respuesta HTTP con métricas para el visor.
@@ -150,4 +160,23 @@ pub struct AuthStatus {
     pub remember_credentials: bool,
     pub has_credentials: bool,
     pub expires_at: Option<i64>,
+}
+
+/// Entrada de historial lista para insertar (sin id/created_at). Las cabeceras
+/// van serializadas a JSON; la auth ya viene redactada.
+pub struct NewHistoryEntry {
+    pub service_id: i64,
+    pub environment_id: Option<i64>,
+    pub method: String,
+    pub url: String,
+    pub request_headers: String,
+    pub request_body: Option<String>,
+    pub status: Option<i64>,
+    pub status_text: String,
+    pub time_ms: i64,
+    pub size_bytes: i64,
+    pub content_type: Option<String>,
+    pub response_headers: String,
+    pub response_body: String,
+    pub error: Option<String>,
 }

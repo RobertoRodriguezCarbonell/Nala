@@ -101,6 +101,7 @@ mod tests {
             headers,
             body: None,
             auth: None,
+            meta: None,
         }
     }
 
