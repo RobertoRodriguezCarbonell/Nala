@@ -5,12 +5,12 @@ use tauri::State;
 
 use crate::error::AppError;
 use crate::models::{
-    AuthStatus, Environment, EnvironmentInput, Header, HttpRequestInput, HttpResponse, ImportResult,
-    Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
+    AuthStatus, Environment, EnvironmentInput, Header, HistoryEntry, HttpRequestInput, HttpResponse,
+    ImportResult, Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
 };
 use crate::openapi::{self, NormalizedSpec};
 use crate::AppState;
-use crate::{auth, crypto, http, login, store};
+use crate::{auth, crypto, history, http, login, store};
 
 // ---------- Servicios ----------
 
@@ -395,14 +395,15 @@ pub fn forget_credentials(
 
 /// Ejecuta una petición HTTP. Si llega contexto de `auth`, inyecta la credencial
 /// del servicio/entorno (descifrada en memoria) antes de enviar.
+/// Si llega `meta`, registra la ejecución en el historial (best-effort).
 #[tauri::command]
 pub async fn send_request(
     state: State<'_, AppState>,
     mut input: HttpRequestInput,
 ) -> Result<HttpResponse, AppError> {
+    let mut injection = auth::Injection::None;
     if let Some(ctx) = input.auth.clone() {
-        // Resolver la inyección bajo lock (no se mantiene a través del await).
-        let injection = {
+        injection = {
             let conn = state.db.lock().expect("db lock");
             let (kind, config) = store::get_auth_strategy(&conn, ctx.service_id)?;
             if kind == "login" {
@@ -414,8 +415,7 @@ pub async fn send_request(
                         let token = crypto::decrypt(&cipher)?;
                         let cfg: Value =
                             serde_json::from_str(&config).unwrap_or_else(|_| serde_json::json!({}));
-                        let scheme =
-                            cfg.get("scheme").and_then(|v| v.as_str()).unwrap_or("Bearer");
+                        let scheme = cfg.get("scheme").and_then(|v| v.as_str()).unwrap_or("Bearer");
                         auth::resolve_login(scheme, &token)
                     }
                     _ => auth::Injection::None,
@@ -428,7 +428,40 @@ pub async fn send_request(
                 auth::resolve(&kind, &config, secret.as_deref())
             }
         };
-        auth::apply(&mut input, injection);
+        auth::apply(&mut input, injection.clone());
     }
-    http::send_request(input).await
+
+    // Snapshot redactado del request final (antes de mover `input` al envío).
+    let meta = input.meta.clone();
+    let snapshot = meta.as_ref().map(|_| history::redact_request(&input, &injection));
+
+    let result = http::send_request(input).await;
+
+    // Registro best-effort: un fallo al loguear no debe romper el envío.
+    if let (Some(meta), Some(snap)) = (&meta, &snapshot) {
+        let entry = match &result {
+            Ok(resp) => history::entry_from_response(meta, snap, resp),
+            Err(e) => history::entry_from_error(meta, snap, &e.to_string()),
+        };
+        let conn = state.db.lock().expect("db lock");
+        if let Err(e) = store::insert_history(&conn, &entry) {
+            eprintln!("no se pudo registrar el historial: {e}");
+        }
+    }
+
+    result
+}
+
+// ---------- Historial ----------
+
+#[tauri::command]
+pub fn list_history(state: State<AppState>, service_id: i64) -> Result<Vec<HistoryEntry>, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::list_history(&conn, service_id)
+}
+
+#[tauri::command]
+pub fn clear_history(state: State<AppState>, service_id: i64) -> Result<(), AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::clear_history(&conn, service_id)
 }
