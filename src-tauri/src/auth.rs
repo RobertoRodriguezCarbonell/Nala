@@ -46,6 +46,16 @@ pub fn resolve(kind: &str, config: &str, secret: Option<&str>) -> Injection {
     }
 }
 
+/// Inyección del token de login cacheado: `Authorization: <scheme> <token>`
+/// (scheme por defecto `Bearer`).
+pub fn resolve_login(scheme: &str, token: &str) -> Injection {
+    let scheme = if scheme.is_empty() { "Bearer" } else { scheme };
+    Injection::Header {
+        name: "Authorization".to_string(),
+        value: format!("{scheme} {token}"),
+    }
+}
+
 /// Aplica la inyección a la petición. No pisa un `Authorization` puesto a mano.
 pub fn apply(input: &mut HttpRequestInput, injection: Injection) {
     match injection {
@@ -148,5 +158,17 @@ mod tests {
         );
         assert_eq!(input.headers.len(), 1);
         assert_eq!(input.headers[0].value, "Bearer manual");
+    }
+
+    #[test]
+    fn resolve_login_uses_scheme_default_bearer() {
+        assert_eq!(
+            resolve_login("", "tok"),
+            Injection::Header { name: "Authorization".into(), value: "Bearer tok".into() }
+        );
+        assert_eq!(
+            resolve_login("Token", "tok"),
+            Injection::Header { name: "Authorization".into(), value: "Token tok".into() }
+        );
     }
 }

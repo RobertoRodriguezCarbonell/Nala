@@ -404,11 +404,28 @@ pub async fn send_request(
         let injection = {
             let conn = state.db.lock().expect("db lock");
             let (kind, config) = store::get_auth_strategy(&conn, ctx.service_id)?;
-            let secret = match store::get_environment_secret(&conn, ctx.environment_id)? {
-                Some(cipher) => Some(crypto::decrypt(&cipher)?),
-                None => None,
-            };
-            auth::resolve(&kind, &config, secret.as_deref())
+            if kind == "login" {
+                let row = store::get_environment_auth(&conn, ctx.environment_id)?;
+                let now = login::now_epoch();
+                let valid = row.token_expires_at.map_or(true, |e| e > now);
+                match row.cached_token {
+                    Some(cipher) if valid => {
+                        let token = crypto::decrypt(&cipher)?;
+                        let cfg: Value =
+                            serde_json::from_str(&config).unwrap_or_else(|_| serde_json::json!({}));
+                        let scheme =
+                            cfg.get("scheme").and_then(|v| v.as_str()).unwrap_or("Bearer");
+                        auth::resolve_login(scheme, &token)
+                    }
+                    _ => auth::Injection::None,
+                }
+            } else {
+                let secret = match store::get_environment_secret(&conn, ctx.environment_id)? {
+                    Some(cipher) => Some(crypto::decrypt(&cipher)?),
+                    None => None,
+                };
+                auth::resolve(&kind, &config, secret.as_deref())
+            }
         };
         auth::apply(&mut input, injection);
     }
