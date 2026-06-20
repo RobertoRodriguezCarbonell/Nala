@@ -16,6 +16,9 @@ RESERVAS = [
     {"id": 2, "cliente": "Jordi Vives", "personas": 2, "estado": "pendiente"},
 ]
 
+EXPECTED_TOKEN = "tok_demo_123"
+EXPECTED_API_KEY = "key_demo_123"
+
 
 class Handler(BaseHTTPRequestHandler):
     def _send(self, code, payload=None, raw=None):
@@ -39,13 +42,25 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return {}
 
+    def _authorized(self):
+        if self.headers.get("Authorization") == f"Bearer {EXPECTED_TOKEN}":
+            return True
+        if self.headers.get("X-API-Key") == EXPECTED_API_KEY:
+            return True
+        from urllib.parse import urlparse, parse_qs
+        qs = parse_qs(urlparse(self.path).query)
+        return EXPECTED_API_KEY in qs.get("api_key", [])
+
     def do_GET(self):
-        if self.path == "/openapi.json":
+        path = self.path.split("?", 1)[0]
+        if path == "/openapi.json":
             return self._send(200, raw=SPEC.encode("utf-8"))
-        if self.path.startswith("/reservas/"):
-            rid = self.path.rsplit("/", 1)[-1]
-            return self._send(200, {"id": rid, "cliente": "María Olano", "personas": 4})
-        if self.path.startswith("/reservas"):
+        if path.startswith("/reservas"):
+            if not self._authorized():
+                return self._send(401, {"detail": "No autenticado"})
+            if path.startswith("/reservas/"):
+                rid = path.rsplit("/", 1)[-1]
+                return self._send(200, {"id": rid, "cliente": "María Olano", "personas": 4})
             return self._send(200, RESERVAS)
         return self._send(404, {"detail": "Not Found"})
 
