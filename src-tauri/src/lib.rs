@@ -2,6 +2,7 @@ mod api;
 mod commands;
 mod db;
 mod error;
+mod http;
 mod keychain;
 mod models;
 mod openapi;
@@ -46,6 +47,10 @@ pub fn run() {
             api::list_snapshots,
             api::import_service,
             api::get_service_spec,
+            api::list_variables,
+            api::upsert_variable,
+            api::delete_variable,
+            api::send_request,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");

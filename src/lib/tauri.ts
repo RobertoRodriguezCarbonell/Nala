@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { NormalizedSpec } from "../types/openapi";
+import type { HttpRequestInput, HttpResponse, Variable, VariableInput } from "../types/http";
 
 /**
  * Capa fina sobre los comandos de Tauri (backend Rust).
@@ -120,4 +121,27 @@ export function getServiceSpec(serviceId: number): Promise<NormalizedSpec | null
 
 export function listSnapshots(serviceId: number): Promise<SnapshotMeta[]> {
   return invoke<SnapshotMeta[]>("list_snapshots", { serviceId });
+}
+
+// ---------- Variables ----------
+
+export function listVariables(serviceId?: number, environmentId?: number): Promise<Variable[]> {
+  return invoke<Variable[]>("list_variables", {
+    serviceId: serviceId ?? null,
+    environmentId: environmentId ?? null,
+  });
+}
+
+export function upsertVariable(input: VariableInput): Promise<Variable> {
+  return invoke<Variable>("upsert_variable", { input });
+}
+
+export function deleteVariable(id: number): Promise<void> {
+  return invoke<void>("delete_variable", { id });
+}
+
+// ---------- Envío HTTP ----------
+
+export function sendRequest(input: HttpRequestInput): Promise<HttpResponse> {
+  return invoke<HttpResponse>("send_request", { input });
 }

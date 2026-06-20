@@ -9,6 +9,7 @@ use crate::error::AppError;
 const MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0001_init.sql"),
     include_str!("../migrations/0002_services.sql"),
+    include_str!("../migrations/0003_variables.sql"),
 ];
 
 /// Abre (o crea) la base de datos SQLite y aplica las migraciones pendientes.

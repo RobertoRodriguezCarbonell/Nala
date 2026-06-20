@@ -70,3 +70,59 @@ pub struct ImportResult {
     pub snapshot: SnapshotMeta,
     pub spec: crate::openapi::NormalizedSpec,
 }
+
+/// Variable de plantilla `{{var}}` con ámbito (global / service / environment).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Variable {
+    pub id: i64,
+    pub scope: String,
+    pub scope_id: Option<i64>,
+    pub key: String,
+    pub value: String,
+    pub is_secret: bool,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VariableInput {
+    pub scope: String,
+    pub scope_id: Option<i64>,
+    pub key: String,
+    pub value: String,
+    #[serde(default)]
+    pub is_secret: bool,
+}
+
+/// Par nombre/valor para cabeceras de la petición y de la respuesta.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Header {
+    pub name: String,
+    pub value: String,
+}
+
+/// Petición HTTP ya resuelta (URL e interpolación hechas en el frontend en F3).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HttpRequestInput {
+    pub method: String,
+    pub url: String,
+    #[serde(default)]
+    pub headers: Vec<Header>,
+    pub body: Option<String>,
+}
+
+/// Respuesta HTTP con métricas para el visor.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HttpResponse {
+    pub status: u16,
+    pub status_text: String,
+    pub headers: Vec<Header>,
+    pub body: String,
+    pub time_ms: u64,
+    pub size_bytes: u64,
+    pub content_type: Option<String>,
+}

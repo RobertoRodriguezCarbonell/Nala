@@ -4,7 +4,9 @@
 use rusqlite::{params, Connection, Row};
 
 use crate::error::AppError;
-use crate::models::{Environment, EnvironmentInput, Service, ServiceInput, SnapshotMeta};
+use crate::models::{
+    Environment, EnvironmentInput, Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
+};
 
 // ---------- Servicios ----------
 
@@ -170,4 +172,67 @@ pub fn latest_raw_spec(conn: &Connection, service_id: i64) -> Result<Option<Stri
         )
         .ok();
     Ok(spec)
+}
+
+// ---------- Variables ----------
+
+fn map_variable(row: &Row) -> rusqlite::Result<Variable> {
+    Ok(Variable {
+        id: row.get("id")?,
+        scope: row.get("scope")?,
+        scope_id: row.get("scope_id")?,
+        key: row.get("key")?,
+        value: row.get("value")?,
+        is_secret: row.get::<_, i64>("is_secret")? != 0,
+        created_at: row.get("created_at")?,
+        updated_at: row.get("updated_at")?,
+    })
+}
+
+/// Devuelve las variables relevantes a un contexto: globales + las del servicio
+/// + las del entorno indicados (si se dan). El frontend resuelve la precedencia.
+pub fn list_variables(
+    conn: &Connection,
+    service_id: Option<i64>,
+    environment_id: Option<i64>,
+) -> Result<Vec<Variable>, AppError> {
+    let mut stmt = conn.prepare(
+        "SELECT * FROM variables
+         WHERE scope = 'global'
+            OR (scope = 'service' AND scope_id = ?1)
+            OR (scope = 'environment' AND scope_id = ?2)
+         ORDER BY scope, key COLLATE NOCASE",
+    )?;
+    let rows = stmt.query_map(params![service_id, environment_id], map_variable)?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+/// Inserta o actualiza una variable por (scope, scope_id, key).
+pub fn upsert_variable(conn: &Connection, input: &VariableInput) -> Result<Variable, AppError> {
+    conn.execute(
+        "INSERT INTO variables (scope, scope_id, key, value, is_secret)
+         VALUES (?1, ?2, ?3, ?4, ?5)
+         ON CONFLICT (scope, IFNULL(scope_id, -1), key)
+         DO UPDATE SET value = excluded.value, is_secret = excluded.is_secret,
+                       updated_at = datetime('now')",
+        params![
+            input.scope,
+            input.scope_id,
+            input.key,
+            input.value,
+            input.is_secret as i64
+        ],
+    )?;
+    conn.query_row(
+        "SELECT * FROM variables
+         WHERE scope = ?1 AND IFNULL(scope_id, -1) = IFNULL(?2, -1) AND key = ?3",
+        params![input.scope, input.scope_id, input.key],
+        map_variable,
+    )
+    .map_err(AppError::from)
+}
+
+pub fn delete_variable(conn: &Connection, id: i64) -> Result<(), AppError> {
+    conn.execute("DELETE FROM variables WHERE id = ?1", params![id])?;
+    Ok(())
 }

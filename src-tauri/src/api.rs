@@ -5,10 +5,11 @@ use tauri::State;
 
 use crate::error::AppError;
 use crate::models::{
-    Environment, EnvironmentInput, ImportResult, Service, ServiceInput, SnapshotMeta,
+    Environment, EnvironmentInput, HttpRequestInput, HttpResponse, ImportResult, Service,
+    ServiceInput, SnapshotMeta, Variable, VariableInput,
 };
 use crate::openapi::{self, NormalizedSpec};
-use crate::store;
+use crate::{http, store};
 use crate::AppState;
 
 // ---------- Servicios ----------
@@ -148,4 +149,36 @@ pub fn get_service_spec(
         }
         None => Ok(None),
     }
+}
+
+// ---------- Variables ----------
+
+#[tauri::command]
+pub fn list_variables(
+    state: State<AppState>,
+    service_id: Option<i64>,
+    environment_id: Option<i64>,
+) -> Result<Vec<Variable>, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::list_variables(&conn, service_id, environment_id)
+}
+
+#[tauri::command]
+pub fn upsert_variable(state: State<AppState>, input: VariableInput) -> Result<Variable, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::upsert_variable(&conn, &input)
+}
+
+#[tauri::command]
+pub fn delete_variable(state: State<AppState>, id: i64) -> Result<(), AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::delete_variable(&conn, id)
+}
+
+// ---------- Envío HTTP ----------
+
+/// Ejecuta una petición HTTP (sin auth en F3) y devuelve la respuesta.
+#[tauri::command]
+pub async fn send_request(input: HttpRequestInput) -> Result<HttpResponse, AppError> {
+    http::send_request(input).await
 }
