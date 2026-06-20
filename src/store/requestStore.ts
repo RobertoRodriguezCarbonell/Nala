@@ -5,6 +5,7 @@ import { defaultForSchema, preferRawJson } from "../lib/schema";
 import type { Operation } from "../types/openapi";
 import type { HttpResponse } from "../types/http";
 import { useServicesStore } from "./servicesStore";
+import { useAuthStore } from "./authStore";
 
 export interface Row {
   id: string;
@@ -29,6 +30,7 @@ interface TabState {
   sending: boolean;
   response: HttpResponse | null;
   error: string | null;
+  reauthNeeded: boolean;
 }
 
 export interface OpenTab {
@@ -97,6 +99,7 @@ function initTab(op: Operation): TabState {
     sending: false,
     response: null,
     error: null,
+    reauthNeeded: false,
   };
 }
 
@@ -231,7 +234,7 @@ export const useRequestStore = create<RequestState>((set, get) => ({
       }
     }
 
-    patch(id, { sending: true, error: null });
+    patch(id, { sending: true, error: null, reauthNeeded: false });
     try {
       const response = await sendRequest({
         method: tab.method,
@@ -241,6 +244,12 @@ export const useRequestStore = create<RequestState>((set, get) => ({
         auth: env?.id != null ? { serviceId: tab.serviceId, environmentId: env.id } : null,
       });
       patch(id, { sending: false, response, responseTab: "body" });
+      if (response.status === 401) {
+        await useAuthStore.getState().load(tab.serviceId, env?.id);
+        if (useAuthStore.getState().byService[tab.serviceId]?.kind === "login") {
+          patch(id, { reauthNeeded: true });
+        }
+      }
     } catch (err) {
       patch(id, { sending: false, error: typeof err === "string" ? err : String(err) });
     }
