@@ -32,9 +32,9 @@ pub async fn send_request(input: HttpRequestInput) -> Result<HttpResponse, AppEr
         } else if e.is_connect() {
             AppError::Http("no se pudo conectar con el servidor".into())
         } else if e.is_request() {
-            AppError::Http(format!("petición no válida: {e}"))
+            AppError::Http(format!("petición no válida: {}", e.without_url()))
         } else {
-            AppError::Http(e.to_string())
+            AppError::Http(e.without_url().to_string())
         }
     })?;
 
