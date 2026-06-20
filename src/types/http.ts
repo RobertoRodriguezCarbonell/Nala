@@ -5,7 +5,19 @@ export interface Header {
   value: string;
 }
 
-export type AuthKind = "none" | "bearer" | "apiKey";
+export type AuthKind = "none" | "bearer" | "apiKey" | "login";
+
+export type TokenState = "none" | "valid" | "expired";
+
+export interface LoginConfig {
+  method?: string;
+  path?: string;
+  contentType?: "form" | "json";
+  userField?: string;
+  passField?: string;
+  tokenPath?: string;
+  scheme?: string;
+}
 
 export interface AuthContext {
   serviceId: number;
@@ -24,6 +36,10 @@ export interface AuthStatus {
   kind: AuthKind;
   config: Record<string, unknown>;
   hasSecret: boolean;
+  tokenState: TokenState;
+  rememberCredentials: boolean;
+  hasCredentials: boolean;
+  expiresAt?: number | null;
 }
 
 export interface HttpResponse {

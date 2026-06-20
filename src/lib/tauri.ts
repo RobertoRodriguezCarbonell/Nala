@@ -177,3 +177,21 @@ export function setEnvironmentSecret(environmentId: number, value: string): Prom
 export function clearEnvironmentSecret(environmentId: number): Promise<void> {
   return invoke<void>("clear_environment_secret", { environmentId });
 }
+
+export function authenticate(
+  serviceId: number,
+  environmentId: number,
+  user: string,
+  pass: string,
+  remember: boolean
+): Promise<AuthStatus> {
+  return invoke<AuthStatus>("authenticate", { serviceId, environmentId, user, pass, remember });
+}
+
+export function reauthenticate(serviceId: number, environmentId: number): Promise<AuthStatus> {
+  return invoke<AuthStatus>("reauthenticate", { serviceId, environmentId });
+}
+
+export function forgetCredentials(serviceId: number, environmentId: number): Promise<AuthStatus> {
+  return invoke<AuthStatus>("forget_credentials", { serviceId, environmentId });
+}
