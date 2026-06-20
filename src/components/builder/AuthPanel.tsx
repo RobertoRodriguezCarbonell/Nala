@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { useServicesStore } from "../../store/servicesStore";
 import type { AuthKind } from "../../types/http";
+import { LoginAuthSection } from "./LoginAuthSection";
 
 const KINDS: { value: AuthKind; label: string }[] = [
   { value: "none", label: "Ninguna" },
   { value: "bearer", label: "Bearer" },
   { value: "apiKey", label: "API key" },
+  { value: "login", label: "Login" },
 ];
 
 const labelStyle: React.CSSProperties = {
@@ -142,7 +144,7 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
       </div>
 
       {/* Secreto (entorno activo) */}
-      {kind !== "none" && (
+      {kind !== "none" && kind !== "login" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={labelStyle}>SECRETO · {env ? `ENTORNO «${env.name}»` : "SIN ENTORNO"}</div>
 
@@ -206,9 +208,17 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
         </div>
       )}
 
+      {kind === "login" && (
+        <LoginAuthSection
+          serviceId={serviceId}
+          environmentId={env?.id ?? null}
+          environmentName={env?.name ?? null}
+          status={status}
+        />
+      )}
+
       <div className="mono" style={{ fontSize: 11, color: "var(--text-disabled)", lineHeight: "17px" }}>
-        El flujo de login (botón Autenticar, caducidad de token y recordar credenciales) llega en la
-        Parte B.
+        La estrategia aplica a todo el servicio; el secreto/credenciales son por entorno y se guardan cifrados.
       </div>
     </div>
   );
