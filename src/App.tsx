@@ -4,6 +4,7 @@ import { TopBar } from "./components/layout/TopBar";
 import { Sidebar } from "./components/layout/Sidebar";
 import { CenterPanel } from "./components/layout/CenterPanel";
 import { ResponsePanel } from "./components/layout/ResponsePanel";
+import { ResizeHandle } from "./components/layout/ResizeHandle";
 import { AddServiceWizard } from "./components/wizard/AddServiceWizard";
 import { VariablesManager } from "./components/variables/VariablesManager";
 import { ConfirmModal } from "./components/common/ConfirmModal";
@@ -30,7 +31,12 @@ export default function App() {
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar />
         <CenterPanel />
-        {serviceView !== "history" && <ResponsePanel />}
+        {serviceView !== "history" && (
+          <>
+            <ResizeHandle />
+            <ResponsePanel />
+          </>
+        )}
       </div>
       {wizardOpen && <AddServiceWizard />}
       {variablesOpen && <VariablesManager />}

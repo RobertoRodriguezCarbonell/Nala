@@ -17,6 +17,9 @@ interface UiState {
   /** Vista activa del panel central a nivel de servicio. */
   serviceView: "endpoints" | "history";
   setServiceView: (v: "endpoints" | "history") => void;
+  /** Ancho (px) del panel de respuesta; persistido en settings. */
+  responseWidth: number;
+  setResponseWidth: (w: number) => void;
 
   /** Arranca la app: carga estado persistido y prepara el keychain. */
   boot: () => Promise<void>;
@@ -28,6 +31,8 @@ export const useUiStore = create<UiState>((set) => ({
   launchCount: 0,
   serviceView: "endpoints",
   setServiceView: (serviceView) => set({ serviceView }),
+  responseWidth: 480,
+  setResponseWidth: (responseWidth) => set({ responseWidth }),
 
   boot: async () => {
     // 1) Asegura la clave de cifrado en el keychain del SO.
@@ -49,6 +54,16 @@ export const useUiStore = create<UiState>((set) => ({
       console.error("No se pudo leer/guardar el estado en SQLite:", err);
     }
 
-    set({ booting: false, keyReady, launchCount });
+    // 3) Carga el ancho del panel de respuesta persistido (si lo hay).
+    let responseWidth = 480;
+    try {
+      const stored = await getSetting("response_width");
+      const n = stored ? parseInt(stored, 10) : NaN;
+      if (!Number.isNaN(n) && n >= 360) responseWidth = n;
+    } catch (err) {
+      console.error("No se pudo leer el ancho del panel:", err);
+    }
+
+    set({ booting: false, keyReady, launchCount, responseWidth });
   },
 }));

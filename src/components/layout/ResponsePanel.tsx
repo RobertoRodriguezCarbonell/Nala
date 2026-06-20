@@ -1,3 +1,4 @@
+import { useUiStore } from "../../store/uiStore";
 import { ReauthBanner } from "../response/ReauthBanner";
 import { ResponseViewer } from "../response/ResponseViewer";
 
@@ -6,8 +7,9 @@ import { ResponseViewer } from "../response/ResponseViewer";
  * Aloja el banner de reauth (cuando hace falta) y el visor de respuesta.
  */
 export function ResponsePanel() {
+  const responseWidth = useUiStore((s) => s.responseWidth);
   return (
-    <div style={{ flex: "0 1 480px", minWidth: 360, display: "flex", flexDirection: "column", background: "var(--bg-app)", minHeight: 0 }}>
+    <div style={{ width: responseWidth, flex: "none", minWidth: 360, display: "flex", flexDirection: "column", background: "var(--bg-app)", minHeight: 0 }}>
       <ReauthBanner />
       <ResponseViewer />
     </div>
