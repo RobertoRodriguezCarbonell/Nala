@@ -1,16 +1,24 @@
 import { useUiStore } from "../../store/uiStore";
 import { useServicesStore } from "../../store/servicesStore";
+import { useRequestStore } from "../../store/requestStore";
 import { RequestTabs } from "../builder/RequestTabs";
 import { RequestBuilder } from "../builder/RequestBuilder";
+import { ServiceTabBar } from "./ServiceTabBar";
+import { HistoryTab } from "../history/HistoryTab";
 import { FolderIcon, PlusIcon } from "../icons";
 
 /**
- * Panel central. Sin servicios → onboarding. Con servicios → pestañas de
- * peticiones abiertas + constructor (formulario desde el esquema, envío).
+ * Panel central. Sin servicios → onboarding. Con servicios → barra de pestañas
+ * de servicio + endpoints o historial según la vista activa.
  */
 export function CenterPanel() {
   const { launchCount, keyReady, booting } = useUiStore();
+  const serviceView = useUiStore((s) => s.serviceView);
   const { services, openWizard } = useServicesStore();
+  const activeServiceId = useRequestStore((s) => {
+    const tab = s.tabs.find((t) => t.id === s.activeTabId);
+    return tab?.serviceId ?? null;
+  });
 
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", background: "var(--bg-app)", borderRight: "0.5px solid var(--border)" }}>
@@ -20,8 +28,21 @@ export function CenterPanel() {
         </div>
       ) : (
         <>
-          <RequestTabs />
-          <RequestBuilder />
+          <ServiceTabBar />
+          {serviceView === "history" ? (
+            activeServiceId != null ? (
+              <HistoryTab serviceId={activeServiceId} />
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para ver el historial de su servicio.</span>
+              </div>
+            )
+          ) : (
+            <>
+              <RequestTabs />
+              <RequestBuilder />
+            </>
+          )}
         </>
       )}
 

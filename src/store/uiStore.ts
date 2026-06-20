@@ -14,6 +14,9 @@ interface UiState {
   keyReady: boolean;
   /** Nº de aperturas de la app (persistido en SQLite). Prueba de persistencia. */
   launchCount: number;
+  /** Vista activa del panel central a nivel de servicio. */
+  serviceView: "endpoints" | "history";
+  setServiceView: (v: "endpoints" | "history") => void;
 
   /** Arranca la app: carga estado persistido y prepara el keychain. */
   boot: () => Promise<void>;
@@ -23,6 +26,8 @@ export const useUiStore = create<UiState>((set) => ({
   booting: true,
   keyReady: false,
   launchCount: 0,
+  serviceView: "endpoints",
+  setServiceView: (serviceView) => set({ serviceView }),
 
   boot: async () => {
     // 1) Asegura la clave de cifrado en el keychain del SO.
