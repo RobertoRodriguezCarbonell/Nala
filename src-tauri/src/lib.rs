@@ -6,6 +6,7 @@ mod db;
 mod error;
 mod http;
 mod keychain;
+mod login;
 mod models;
 mod openapi;
 mod store;

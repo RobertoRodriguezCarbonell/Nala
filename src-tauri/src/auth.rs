@@ -67,7 +67,7 @@ pub fn apply(input: &mut HttpRequestInput, injection: Injection) {
 }
 
 /// Codificación porcentual mínima (RFC 3986, sin reservados).
-fn urlencode(s: &str) -> String {
+pub(crate) fn urlencode(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for byte in s.bytes() {
         match byte {
