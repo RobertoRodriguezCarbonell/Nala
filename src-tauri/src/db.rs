@@ -10,6 +10,7 @@ const MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0001_init.sql"),
     include_str!("../migrations/0002_services.sql"),
     include_str!("../migrations/0003_variables.sql"),
+    include_str!("../migrations/0004_auth.sql"),
 ];
 
 /// Abre (o crea) la base de datos SQLite y aplica las migraciones pendientes.
@@ -34,4 +35,12 @@ fn run_migrations(conn: &Connection) -> Result<(), AppError> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+pub fn open_in_memory() -> Connection {
+    let conn = Connection::open_in_memory().expect("memoria");
+    conn.execute_batch("PRAGMA foreign_keys = ON;").expect("pragma");
+    run_migrations(&conn).expect("migraciones");
+    conn
 }

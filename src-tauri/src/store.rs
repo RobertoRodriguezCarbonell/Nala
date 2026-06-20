@@ -236,3 +236,124 @@ pub fn delete_variable(conn: &Connection, id: i64) -> Result<(), AppError> {
     conn.execute("DELETE FROM variables WHERE id = ?1", params![id])?;
     Ok(())
 }
+
+// ---------- Auth ----------
+
+/// Devuelve `(kind, config_json)` de un servicio; `('none', '{}')` si no hay fila.
+pub fn get_auth_strategy(conn: &Connection, service_id: i64) -> Result<(String, String), AppError> {
+    let row = conn
+        .query_row(
+            "SELECT kind, config FROM auth_strategy WHERE service_id = ?1",
+            params![service_id],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+        )
+        .ok();
+    Ok(row.unwrap_or_else(|| ("none".to_string(), "{}".to_string())))
+}
+
+pub fn set_auth_strategy(
+    conn: &Connection,
+    service_id: i64,
+    kind: &str,
+    config: &str,
+) -> Result<(), AppError> {
+    conn.execute(
+        "INSERT INTO auth_strategy (service_id, kind, config) VALUES (?1, ?2, ?3)
+         ON CONFLICT(service_id) DO UPDATE SET kind = excluded.kind, config = excluded.config",
+        params![service_id, kind, config],
+    )?;
+    Ok(())
+}
+
+/// Devuelve el secreto cifrado de un entorno, si lo hay.
+pub fn get_environment_secret(
+    conn: &Connection,
+    environment_id: i64,
+) -> Result<Option<String>, AppError> {
+    let secret = conn
+        .query_row(
+            "SELECT secret FROM environment_auth WHERE environment_id = ?1",
+            params![environment_id],
+            |r| r.get::<_, Option<String>>(0),
+        )
+        .ok()
+        .flatten();
+    Ok(secret)
+}
+
+pub fn set_environment_secret(
+    conn: &Connection,
+    environment_id: i64,
+    ciphertext: &str,
+) -> Result<(), AppError> {
+    conn.execute(
+        "INSERT INTO environment_auth (environment_id, secret) VALUES (?1, ?2)
+         ON CONFLICT(environment_id) DO UPDATE SET secret = excluded.secret",
+        params![environment_id, ciphertext],
+    )?;
+    Ok(())
+}
+
+pub fn clear_environment_secret(conn: &Connection, environment_id: i64) -> Result<(), AppError> {
+    conn.execute(
+        "DELETE FROM environment_auth WHERE environment_id = ?1",
+        params![environment_id],
+    )?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db;
+    use crate::models::{EnvironmentInput, ServiceInput};
+
+    fn seed(conn: &Connection) -> (i64, i64) {
+        let svc = create_service(
+            conn,
+            &ServiceInput {
+                name: "S".into(),
+                group_name: None,
+                color: None,
+                icon: None,
+                spec_path: "/openapi.json".into(),
+            },
+        )
+        .unwrap();
+        let env = create_environment(
+            conn,
+            &EnvironmentInput {
+                service_id: svc.id,
+                name: "local".into(),
+                base_url: "http://x".into(),
+            },
+        )
+        .unwrap();
+        (svc.id, env.id)
+    }
+
+    #[test]
+    fn auth_strategy_defaults_and_upsert() {
+        let conn = db::open_in_memory();
+        let (svc, _env) = seed(&conn);
+        assert_eq!(
+            get_auth_strategy(&conn, svc).unwrap(),
+            ("none".to_string(), "{}".to_string())
+        );
+        set_auth_strategy(&conn, svc, "apiKey", r#"{"name":"X-API-Key","in":"header"}"#).unwrap();
+        let (kind, config) = get_auth_strategy(&conn, svc).unwrap();
+        assert_eq!(kind, "apiKey");
+        assert!(config.contains("X-API-Key"));
+    }
+
+    #[test]
+    fn environment_secret_set_get_clear() {
+        let conn = db::open_in_memory();
+        let (_svc, env) = seed(&conn);
+        assert_eq!(get_environment_secret(&conn, env).unwrap(), None);
+        set_environment_secret(&conn, env, "cipher==").unwrap();
+        assert_eq!(get_environment_secret(&conn, env).unwrap(), Some("cipher==".to_string()));
+        clear_environment_secret(&conn, env).unwrap();
+        assert_eq!(get_environment_secret(&conn, env).unwrap(), None);
+    }
+}
