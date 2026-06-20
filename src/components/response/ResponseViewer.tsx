@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import type { HttpResponse } from "../../types/http";
 
@@ -50,12 +50,18 @@ export function ResponseViewer() {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
-        {st.responseTab === "body" ? <Body res={res} /> : <Headers res={res} />}
-      </div>
+      {st.responseTab === "body" ? (
+        <Body res={res} />
+      ) : (
+        <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+          <Headers res={res} />
+        </div>
+      )}
     </div>
   );
 }
+
+const PAGE = 500;
 
 function Body({ res }: { res: HttpResponse }) {
   const pretty = useMemo(() => {
@@ -70,16 +76,78 @@ function Body({ res }: { res: HttpResponse }) {
     return { text: res.body, json: false };
   }, [res]);
 
-  const lines = pretty.text.split("\n");
+  const lines = useMemo(() => pretty.text.split("\n"), [pretty.text]);
+  const paginated = lines.length > PAGE;
+  const pageCount = Math.max(1, Math.ceil(lines.length / PAGE));
+
+  const [page, setPage] = useState(0);
+  useEffect(() => {
+    setPage(0); // nueva respuesta → vuelve a la primera página
+  }, [pretty.text]);
+  const safePage = Math.min(page, pageCount - 1);
+
+  const start = paginated ? safePage * PAGE : 0;
+  const shown = paginated ? lines.slice(start, start + PAGE) : lines;
+
   return (
-    <div className="mono" style={{ fontSize: 12, lineHeight: "19px", padding: "8px 0" }}>
-      {lines.map((line, i) => (
-        <div key={i} style={{ display: "flex", whiteSpace: "pre" }}>
-          <div style={{ width: 42, flex: "none", textAlign: "right", paddingRight: 12, color: "var(--text-linenum)", userSelect: "none" }}>{i + 1}</div>
-          <div style={{ flex: 1, color: "var(--text-secondary)" }}>{pretty.json ? highlight(line) : line}</div>
+    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", position: "relative" }}>
+      <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+        <div className="mono" style={{ fontSize: 12, lineHeight: "19px", padding: "8px 0" }}>
+          {shown.map((line, i) => (
+            <div key={start + i} style={{ display: "flex", whiteSpace: "pre" }}>
+              <div style={{ width: 42, flex: "none", textAlign: "right", paddingRight: 12, color: "var(--text-linenum)", userSelect: "none" }}>{start + i + 1}</div>
+              <div style={{ flex: 1, color: "var(--text-secondary)", userSelect: "text", cursor: "text" }}>{pretty.json ? highlight(line) : line}</div>
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
+
+      {paginated && (
+        <div style={{ flex: "none", height: 30, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, borderTop: "0.5px solid var(--border)" }}>
+          <PagerBtn label="«" disabled={safePage === 0} onClick={() => setPage(0)} />
+          <PagerBtn label="‹" disabled={safePage === 0} onClick={() => setPage(safePage - 1)} />
+          <span className="mono" style={{ fontSize: 11, color: "var(--text-faint)", padding: "0 8px" }}>Página {safePage + 1} / {pageCount}</span>
+          <PagerBtn label="›" disabled={safePage >= pageCount - 1} onClick={() => setPage(safePage + 1)} />
+          <PagerBtn label="»" disabled={safePage >= pageCount - 1} onClick={() => setPage(pageCount - 1)} />
+        </div>
+      )}
+
+      <CopyButton text={pretty.text} />
     </div>
+  );
+}
+
+function PagerBtn({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{ fontFamily: "var(--font-mono)", fontSize: 12, width: 26, height: 22, borderRadius: "var(--radius-control)", border: "0.5px solid var(--border-control)", background: "transparent", color: disabled ? "var(--text-disabled)" : "var(--text-secondary)", cursor: disabled ? "default" : "pointer" }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      /* portapapeles no disponible */
+    }
+  };
+  return (
+    <button
+      onClick={() => void onCopy()}
+      title="Copiar respuesta"
+      style={{ position: "absolute", top: 8, right: 14, zIndex: 5, fontFamily: "var(--font-mono)", fontSize: 11, padding: "4px 10px", borderRadius: "var(--radius-control)", border: "0.5px solid var(--border-control)", background: "var(--bg-input)", color: copied ? "var(--status-2xx)" : "var(--text-secondary)", cursor: "pointer" }}
+    >
+      {copied ? "Copiado ✓" : "Copiar"}
+    </button>
   );
 }
 
