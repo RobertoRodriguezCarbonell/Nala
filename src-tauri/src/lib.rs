@@ -1,5 +1,6 @@
 mod api;
 mod commands;
+mod crypto;
 mod db;
 mod error;
 mod http;

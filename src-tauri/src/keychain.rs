@@ -30,3 +30,25 @@ fn hex_encode(bytes: &[u8]) -> String {
     }
     out
 }
+
+/// Lee la clave de cifrado de 32 bytes del Credential Manager (la crea si falta).
+pub fn get_key() -> Result<[u8; 32], AppError> {
+    ensure_key()?;
+    let entry = Entry::new(SERVICE, KEY_USER)?;
+    let hex = entry.get_password()?;
+    let bytes = hex_decode(&hex)
+        .ok_or_else(|| AppError::Other("clave de cifrado corrupta en el keychain".into()))?;
+    bytes
+        .try_into()
+        .map_err(|_| AppError::Other("la clave de cifrado no mide 32 bytes".into()))
+}
+
+fn hex_decode(s: &str) -> Option<Vec<u8>> {
+    if s.len() % 2 != 0 {
+        return None;
+    }
+    (0..s.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&s[i..i + 2], 16).ok())
+        .collect()
+}
