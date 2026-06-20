@@ -5,11 +5,25 @@ export interface Header {
   value: string;
 }
 
+export type AuthKind = "none" | "bearer" | "apiKey";
+
+export interface AuthContext {
+  serviceId: number;
+  environmentId: number;
+}
+
 export interface HttpRequestInput {
   method: string;
   url: string;
   headers: Header[];
   body?: string | null;
+  auth?: AuthContext | null;
+}
+
+export interface AuthStatus {
+  kind: AuthKind;
+  config: Record<string, unknown>;
+  hasSecret: boolean;
 }
 
 export interface HttpResponse {

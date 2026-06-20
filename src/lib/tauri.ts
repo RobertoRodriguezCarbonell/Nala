@@ -1,6 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { NormalizedSpec } from "../types/openapi";
-import type { HttpRequestInput, HttpResponse, Variable, VariableInput } from "../types/http";
+import type {
+  AuthKind,
+  AuthStatus,
+  HttpRequestInput,
+  HttpResponse,
+  Variable,
+  VariableInput,
+} from "../types/http";
 
 /**
  * Capa fina sobre los comandos de Tauri (backend Rust).
@@ -144,4 +151,29 @@ export function deleteVariable(id: number): Promise<void> {
 
 export function sendRequest(input: HttpRequestInput): Promise<HttpResponse> {
   return invoke<HttpResponse>("send_request", { input });
+}
+
+// ---------- Auth ----------
+
+export function getAuth(serviceId: number, environmentId?: number): Promise<AuthStatus> {
+  return invoke<AuthStatus>("get_auth", {
+    serviceId,
+    environmentId: environmentId ?? null,
+  });
+}
+
+export function setAuthStrategy(
+  serviceId: number,
+  kind: AuthKind,
+  config: Record<string, unknown>
+): Promise<void> {
+  return invoke<void>("set_auth_strategy", { serviceId, kind, config });
+}
+
+export function setEnvironmentSecret(environmentId: number, value: string): Promise<void> {
+  return invoke<void>("set_environment_secret", { environmentId, value });
+}
+
+export function clearEnvironmentSecret(environmentId: number): Promise<void> {
+  return invoke<void>("clear_environment_secret", { environmentId });
 }
