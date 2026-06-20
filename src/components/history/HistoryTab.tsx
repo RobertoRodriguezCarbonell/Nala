@@ -35,7 +35,7 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
-        <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>{list.length} ejecuciones</span>
+        <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>{list.length} {list.length === 1 ? "ejecución" : "ejecuciones"}</span>
         <button
           onClick={() => void clear(serviceId)}
           disabled={list.length === 0}

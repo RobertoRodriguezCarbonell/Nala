@@ -12,7 +12,9 @@ import { FolderIcon, PlusIcon } from "../icons";
  * de servicio + endpoints o historial según la vista activa.
  */
 export function CenterPanel() {
-  const { launchCount, keyReady, booting } = useUiStore();
+  const launchCount = useUiStore((s) => s.launchCount);
+  const keyReady = useUiStore((s) => s.keyReady);
+  const booting = useUiStore((s) => s.booting);
   const serviceView = useUiStore((s) => s.serviceView);
   const { services, openWizard } = useServicesStore();
   const activeServiceId = useRequestStore((s) => {
