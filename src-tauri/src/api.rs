@@ -363,8 +363,16 @@ pub async fn reauthenticate(
         let json = crypto::decrypt(&cipher)?;
         let v: Value = serde_json::from_str(&json)
             .map_err(|_| AppError::Other("credenciales corruptas".into()))?;
-        let user = v.get("user").and_then(|x| x.as_str()).unwrap_or("").to_string();
-        let pass = v.get("pass").and_then(|x| x.as_str()).unwrap_or("").to_string();
+        let user = v
+            .get("user")
+            .and_then(|x| x.as_str())
+            .ok_or_else(|| AppError::Other("credenciales corruptas: falta campo user".into()))?
+            .to_string();
+        let pass = v
+            .get("pass")
+            .and_then(|x| x.as_str())
+            .ok_or_else(|| AppError::Other("credenciales corruptas: falta campo pass".into()))?
+            .to_string();
         (user, pass)
     };
     do_login(&state, service_id, environment_id, user, pass, true).await

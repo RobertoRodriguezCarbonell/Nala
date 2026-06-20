@@ -351,15 +351,6 @@ pub fn set_environment_token(
     Ok(())
 }
 
-pub fn clear_environment_token(conn: &Connection, environment_id: i64) -> Result<(), AppError> {
-    conn.execute(
-        "UPDATE environment_auth SET cached_token = NULL, token_expires_at = NULL
-         WHERE environment_id = ?1",
-        params![environment_id],
-    )?;
-    Ok(())
-}
-
 pub fn set_environment_credentials(
     conn: &Connection,
     environment_id: i64,
@@ -433,7 +424,7 @@ mod tests {
     }
 
     #[test]
-    fn environment_token_set_get_clear() {
+    fn environment_token_set_and_get() {
         let conn = db::open_in_memory();
         let (_svc, env) = seed(&conn);
         assert!(get_environment_auth(&conn, env).unwrap().cached_token.is_none());
@@ -442,11 +433,6 @@ mod tests {
         let row = get_environment_auth(&conn, env).unwrap();
         assert_eq!(row.cached_token.as_deref(), Some("tok_cipher"));
         assert_eq!(row.token_expires_at, Some(4600));
-
-        clear_environment_token(&conn, env).unwrap();
-        let row = get_environment_auth(&conn, env).unwrap();
-        assert!(row.cached_token.is_none());
-        assert!(row.token_expires_at.is_none());
     }
 
     #[test]
