@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useUiStore } from "../../store/uiStore";
 import { useServicesStore } from "../../store/servicesStore";
+import { useVariablesStore } from "../../store/variablesStore";
 import { ChevronIcon, LockIcon, SearchIcon, SettingsIcon } from "../icons";
 
 /**
@@ -10,6 +11,7 @@ import { ChevronIcon, LockIcon, SearchIcon, SettingsIcon } from "../icons";
 export function TopBar() {
   const keyReady = useUiStore((s) => s.keyReady);
   const { services, environments, activeServiceId, activeEnvironmentId, setActiveEnvironment } = useServicesStore();
+  const openVariables = useVariablesStore((s) => s.openManager);
 
   const [envMenu, setEnvMenu] = useState(false);
 
@@ -110,6 +112,17 @@ export function TopBar() {
       </div>
 
       <div style={{ flex: 1 }} />
+
+      <div
+        title="Variables"
+        onClick={openVariables}
+        className="mono"
+        style={{ height: 28, padding: "0 9px", borderRadius: "var(--radius-control)", border: "0.5px solid var(--border-input)", display: "flex", alignItems: "center", fontSize: 11.5, color: "var(--text-muted)", cursor: "pointer" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--accent-var)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+      >
+        {"{{ }}"}
+      </div>
 
       <div title={keyReady ? "Clave de cifrado lista en Credential Manager" : "Clave de cifrado no disponible"} style={{ display: "flex", alignItems: "center", gap: 6, opacity: keyReady ? 1 : 0.4 }}>
         <LockIcon color={keyReady ? "var(--status-2xx)" : "var(--text-faint)"} />

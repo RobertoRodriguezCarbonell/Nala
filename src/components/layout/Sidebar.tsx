@@ -1,4 +1,5 @@
 import { useServicesStore, opKey } from "../../store/servicesStore";
+import { useRequestStore } from "../../store/requestStore";
 import { ChevronIcon, FolderClosedIcon, PlusIcon, RefreshIcon } from "../icons";
 import { MethodBadge } from "../MethodBadge";
 import type { Operation } from "../../types/openapi";
@@ -21,6 +22,7 @@ export function Sidebar() {
     selectOperation,
     refreshActiveService,
   } = useServicesStore();
+  const openTab = useRequestStore((s) => s.openTab);
 
   const totalEndpoints = services.reduce((n, s) => n + (specs[s.id]?.operations.length ?? 0), 0);
 
@@ -142,7 +144,7 @@ export function Sidebar() {
                         key={opKey(op)}
                         op={op}
                         selected={isActive && selectedOpKey === opKey(op)}
-                        onSelect={() => selectOperation(svc.id, opKey(op))}
+                        onSelect={() => { selectOperation(svc.id, opKey(op)); openTab(svc.id, op); }}
                       />
                     ))}
                   </div>
