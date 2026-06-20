@@ -1,0 +1,32 @@
+# --- Rastros de herramientas (repo público: no subir) ---
+CLAUDE.md
+.claude/
+.mcp.json
+prompt-claude-design.md
+
+# --- Node / frontend ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# --- Rust / Tauri ---
+/src-tauri/target/
+target/
+/src-tauri/gen/schemas/
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- SQLite / datos locales ---
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# --- Editor / SO ---
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+*.log
