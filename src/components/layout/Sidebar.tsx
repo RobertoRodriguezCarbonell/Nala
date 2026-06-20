@@ -1,10 +1,29 @@
-import { PlusIcon } from "../icons";
+import { useServicesStore, opKey } from "../../store/servicesStore";
+import { ChevronIcon, FolderClosedIcon, PlusIcon, RefreshIcon } from "../icons";
+import { MethodBadge } from "../MethodBadge";
+import type { Operation } from "../../types/openapi";
 
 /**
- * Sidebar izquierda: árbol de servicios. En Fase 1 está vacía (aún no hay
- * servicios dados de alta); en Fase 2 se llena con el árbol del snapshot OpenAPI.
+ * Sidebar: árbol de servicios → endpoints. Servicios como carpetas plegables
+ * (agrupadas por proyecto); cada endpoint con su badge de método y ruta.
  */
 export function Sidebar() {
+  const {
+    services,
+    specs,
+    expanded,
+    loadingSpec,
+    activeServiceId,
+    selectedOpKey,
+    openWizard,
+    toggleExpand,
+    selectService,
+    selectOperation,
+    refreshActiveService,
+  } = useServicesStore();
+
+  const totalEndpoints = services.reduce((n, s) => n + (specs[s.id]?.operations.length ?? 0), 0);
+
   return (
     <div
       style={{
@@ -28,65 +47,146 @@ export function Sidebar() {
           borderBottom: "0.5px solid var(--border-subtle)",
         }}
       >
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: "var(--text-muted)",
-            letterSpacing: "0.5px",
-            textTransform: "uppercase",
-          }}
-        >
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.5px", textTransform: "uppercase" }}>
           Servicios
         </span>
         <div
           title="Añadir servicio"
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            color: "var(--text-muted)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--bg-hover)";
-            e.currentTarget.style.color = "var(--text-primary)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "var(--text-muted)";
-          }}
+          onClick={openWizard}
+          style={{ width: 22, height: 22, borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
         >
           <PlusIcon />
         </div>
       </div>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 20 }}>
-        <span className="mono" style={{ fontSize: 11, color: "var(--text-disabled)", textAlign: "center", lineHeight: "17px" }}>
-          Aún no hay
-          <br />
-          servicios dados de alta
-        </span>
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "4px 0" }}>
+        {services.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: "40px 20px" }}>
+            <span className="mono" style={{ fontSize: 11, color: "var(--text-disabled)", textAlign: "center", lineHeight: "17px" }}>
+              Aún no hay
+              <br />
+              servicios dados de alta
+            </span>
+          </div>
+        ) : (
+          services.map((svc) => {
+            const isOpen = !!expanded[svc.id];
+            const isActive = activeServiceId === svc.id;
+            const spec = specs[svc.id];
+            const ops = spec?.operations ?? [];
+            return (
+              <div key={svc.id}>
+                <div
+                  onClick={() => { selectService(svc.id); toggleExpand(svc.id); }}
+                  className="svc-row"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "5px 10px 5px 10px",
+                    cursor: "pointer",
+                    fontSize: 12.5,
+                    color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-row-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <span style={{ display: "flex", transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .12s" }}>
+                    <ChevronIcon />
+                  </span>
+                  <FolderClosedIcon color={isActive ? "var(--accent)" : "var(--text-faint)"} />
+                  <span style={{ fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{svc.name}</span>
+                  {loadingSpec[svc.id] ? (
+                    <span
+                      style={{
+                        marginLeft: "auto",
+                        width: 11,
+                        height: 11,
+                        border: "1.5px solid var(--border)",
+                        borderTopColor: "var(--accent)",
+                        borderRadius: "50%",
+                        animation: "nala-spin 0.7s linear infinite",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      {isActive && (
+                        <span
+                          title="Refrescar (nuevo snapshot)"
+                          onClick={(e) => { e.stopPropagation(); void refreshActiveService(); }}
+                          style={{ marginLeft: "auto", color: "var(--text-faint)", display: "flex" }}
+                          onMouseEnter={(ev) => (ev.currentTarget.style.color = "var(--accent)")}
+                          onMouseLeave={(ev) => (ev.currentTarget.style.color = "var(--text-faint)")}
+                        >
+                          <RefreshIcon />
+                        </span>
+                      )}
+                      <span className="mono" style={{ fontSize: 10, color: "var(--text-disabled)", marginLeft: isActive ? 8 : "auto" }}>
+                        {ops.length}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {isOpen && (
+                  <div>
+                    {spec === null && !loadingSpec[svc.id] && (
+                      <div className="mono" style={{ fontSize: 11, color: "var(--text-disabled)", padding: "5px 12px 5px 30px" }}>
+                        sin snapshot — refresca
+                      </div>
+                    )}
+                    {ops.map((op) => (
+                      <EndpointRow
+                        key={opKey(op)}
+                        op={op}
+                        selected={isActive && selectedOpKey === opKey(op)}
+                        onSelect={() => selectOperation(svc.id, opKey(op))}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
 
-      <div
-        style={{
-          flex: "none",
-          borderTop: "0.5px solid var(--border-subtle)",
-          padding: "7px 12px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-disabled)" }} />
+      <div style={{ flex: "none", borderTop: "0.5px solid var(--border-subtle)", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: services.length ? "var(--status-2xx)" : "var(--text-disabled)" }} />
         <span className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)" }}>
-          0 servicios · 0 endpoints
+          {services.length} servicio{services.length === 1 ? "" : "s"} · {totalEndpoints} endpoints
         </span>
       </div>
+    </div>
+  );
+}
+
+function EndpointRow({ op, selected, onSelect }: { op: Operation; selected: boolean; onSelect: () => void }) {
+  return (
+    <div
+      onClick={onSelect}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "4px 12px 4px 30px",
+        cursor: "pointer",
+        background: selected ? "var(--bg-raised)" : "transparent",
+        borderLeft: `2px solid ${selected ? "var(--accent)" : "transparent"}`,
+      }}
+      onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = "var(--bg-row-hover)"; }}
+      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = "transparent"; }}
+    >
+      <MethodBadge method={op.method} />
+      <span
+        className="mono"
+        title={op.path}
+        style={{ fontSize: 11.5, color: selected ? "var(--text-primary)" : "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+      >
+        {op.path}
+      </span>
     </div>
   );
 }

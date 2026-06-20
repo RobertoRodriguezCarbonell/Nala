@@ -53,6 +53,32 @@ export function FolderIcon({ size = 28, color = "var(--accent)" }: IconProps) {
   );
 }
 
+export function RefreshIcon({ size = 12, color = "currentColor", style }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" style={style}>
+      <path
+        d="M11.5 7a4.5 4.5 0 1 1-1.3-3.2M11.5 1.5V4h-2.5"
+        stroke={color}
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function FolderClosedIcon({ size = 13, color = "var(--text-faint)" }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path
+        d="M1.5 4.2c0-.6.4-1 1-1h2.6l1.1 1.1h4.3c.6 0 1 .4 1 1v4.4c0 .6-.4 1-1 1H2.5c-.6 0-1-.4-1-1V4.2Z"
+        stroke={color}
+        strokeWidth="1.1"
+      />
+    </svg>
+  );
+}
+
 export function LockIcon({ size = 12, color = "var(--status-2xx)" }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
