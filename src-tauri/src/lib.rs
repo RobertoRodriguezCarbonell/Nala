@@ -53,6 +53,10 @@ pub fn run() {
             api::upsert_variable,
             api::delete_variable,
             api::send_request,
+            api::get_auth,
+            api::set_auth_strategy,
+            api::set_environment_secret,
+            api::clear_environment_secret,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");

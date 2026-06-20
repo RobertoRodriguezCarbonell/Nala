@@ -1,16 +1,16 @@
-//! Comandos Tauri de la Fase 2: CRUD de servicios/entornos e importación OpenAPI.
+//! Comandos Tauri: CRUD de servicios/entornos, OpenAPI, variables, auth y envío.
 
 use serde_json::Value;
 use tauri::State;
 
 use crate::error::AppError;
 use crate::models::{
-    Environment, EnvironmentInput, HttpRequestInput, HttpResponse, ImportResult, Service,
-    ServiceInput, SnapshotMeta, Variable, VariableInput,
+    AuthStatus, Environment, EnvironmentInput, HttpRequestInput, HttpResponse, ImportResult,
+    Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
 };
 use crate::openapi::{self, NormalizedSpec};
-use crate::{http, store};
 use crate::AppState;
+use crate::{auth, crypto, http, store};
 
 // ---------- Servicios ----------
 
@@ -175,10 +175,78 @@ pub fn delete_variable(state: State<AppState>, id: i64) -> Result<(), AppError> 
     store::delete_variable(&conn, id)
 }
 
+// ---------- Auth ----------
+
+/// Estrategia del servicio + si el entorno indicado tiene secreto guardado.
+#[tauri::command]
+pub fn get_auth(
+    state: State<AppState>,
+    service_id: i64,
+    environment_id: Option<i64>,
+) -> Result<AuthStatus, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    let (kind, config) = store::get_auth_strategy(&conn, service_id)?;
+    let has_secret = match environment_id {
+        Some(env) => store::get_environment_secret(&conn, env)?.is_some(),
+        None => false,
+    };
+    let config: Value = serde_json::from_str(&config).unwrap_or_else(|_| serde_json::json!({}));
+    Ok(AuthStatus { kind, config, has_secret })
+}
+
+#[tauri::command]
+pub fn set_auth_strategy(
+    state: State<AppState>,
+    service_id: i64,
+    kind: String,
+    config: Value,
+) -> Result<(), AppError> {
+    let conn = state.db.lock().expect("db lock");
+    let config = serde_json::to_string(&config).map_err(|e| AppError::Other(e.to_string()))?;
+    store::set_auth_strategy(&conn, service_id, &kind, &config)
+}
+
+#[tauri::command]
+pub fn set_environment_secret(
+    state: State<AppState>,
+    environment_id: i64,
+    value: String,
+) -> Result<(), AppError> {
+    let conn = state.db.lock().expect("db lock");
+    let ciphertext = crypto::encrypt(&value)?;
+    store::set_environment_secret(&conn, environment_id, &ciphertext)
+}
+
+#[tauri::command]
+pub fn clear_environment_secret(
+    state: State<AppState>,
+    environment_id: i64,
+) -> Result<(), AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::clear_environment_secret(&conn, environment_id)
+}
+
 // ---------- Envío HTTP ----------
 
-/// Ejecuta una petición HTTP (sin auth en F3) y devuelve la respuesta.
+/// Ejecuta una petición HTTP. Si llega contexto de `auth`, inyecta la credencial
+/// del servicio/entorno (descifrada en memoria) antes de enviar.
 #[tauri::command]
-pub async fn send_request(input: HttpRequestInput) -> Result<HttpResponse, AppError> {
+pub async fn send_request(
+    state: State<'_, AppState>,
+    mut input: HttpRequestInput,
+) -> Result<HttpResponse, AppError> {
+    if let Some(ctx) = input.auth.clone() {
+        // Resolver la inyección bajo lock (no se mantiene a través del await).
+        let injection = {
+            let conn = state.db.lock().expect("db lock");
+            let (kind, config) = store::get_auth_strategy(&conn, ctx.service_id)?;
+            let secret = match store::get_environment_secret(&conn, ctx.environment_id)? {
+                Some(cipher) => Some(crypto::decrypt(&cipher)?),
+                None => None,
+            };
+            auth::resolve(&kind, &config, secret.as_deref())
+        };
+        auth::apply(&mut input, injection);
+    }
     http::send_request(input).await
 }
