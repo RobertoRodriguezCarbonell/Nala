@@ -6,6 +6,7 @@ import { CenterPanel } from "./components/layout/CenterPanel";
 import { ResponsePanel } from "./components/layout/ResponsePanel";
 import { AddServiceWizard } from "./components/wizard/AddServiceWizard";
 import { VariablesManager } from "./components/variables/VariablesManager";
+import { ConfirmModal } from "./components/common/ConfirmModal";
 import { useUiStore } from "./store/uiStore";
 import { useServicesStore } from "./store/servicesStore";
 import { useVariablesStore } from "./store/variablesStore";
@@ -33,6 +34,7 @@ export default function App() {
       </div>
       {wizardOpen && <AddServiceWizard />}
       {variablesOpen && <VariablesManager />}
+      <ConfirmModal />
     </div>
   );
 }
