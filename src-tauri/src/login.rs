@@ -47,6 +47,9 @@ pub fn expiry_from_jwt(token: &str) -> Option<i64> {
     let _header = parts.next()?;
     let payload_b64 = parts.next()?;
     parts.next()?; // un JWT tiene firma; si no, no lo tratamos como JWT
+    if parts.next().is_some() {
+        return None; // más de 3 segmentos: no es un JWT
+    }
     let bytes = URL_SAFE_NO_PAD.decode(payload_b64).ok()?;
     let payload: Value = serde_json::from_slice(&bytes).ok()?;
     payload.get("exp").and_then(|v| v.as_i64())
@@ -117,6 +120,7 @@ mod tests {
     fn expiry_from_jwt_rejects_non_jwt() {
         assert_eq!(expiry_from_jwt("no-es-un-jwt"), None);
         assert_eq!(expiry_from_jwt("solo.dos"), None); // sin firma
+        assert_eq!(expiry_from_jwt("a.b.c.d"), None); // 4 segmentos
     }
 
     #[test]
