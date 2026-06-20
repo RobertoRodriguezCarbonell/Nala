@@ -5,8 +5,10 @@ use rusqlite::{params, Connection, Row};
 
 use crate::error::AppError;
 use crate::models::{
-    Environment, EnvironmentInput, Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
+    Environment, EnvironmentInput, Header, HistoryEntry, Service, ServiceInput, SnapshotMeta,
+    Variable, VariableInput,
 };
+use crate::models::NewHistoryEntry;
 
 // ---------- Servicios ----------
 
@@ -368,6 +370,60 @@ pub fn set_environment_credentials(
     Ok(())
 }
 
+// ---------- Historial ----------
+
+fn parse_headers(s: &str) -> Vec<Header> {
+    serde_json::from_str(s).unwrap_or_default()
+}
+
+fn map_history(row: &Row) -> rusqlite::Result<HistoryEntry> {
+    Ok(HistoryEntry {
+        id: row.get("id")?,
+        service_id: row.get("service_id")?,
+        environment_id: row.get("environment_id")?,
+        method: row.get("method")?,
+        url: row.get("url")?,
+        request_headers: parse_headers(&row.get::<_, String>("request_headers")?),
+        request_body: row.get("request_body")?,
+        status: row.get("status")?,
+        status_text: row.get("status_text")?,
+        time_ms: row.get("time_ms")?,
+        size_bytes: row.get("size_bytes")?,
+        content_type: row.get("content_type")?,
+        response_headers: parse_headers(&row.get::<_, String>("response_headers")?),
+        response_body: row.get("response_body")?,
+        error: row.get("error")?,
+        created_at: row.get("created_at")?,
+    })
+}
+
+pub fn insert_history(conn: &Connection, e: &NewHistoryEntry) -> Result<(), AppError> {
+    conn.execute(
+        "INSERT INTO history
+         (service_id, environment_id, method, url, request_headers, request_body,
+          status, status_text, time_ms, size_bytes, content_type,
+          response_headers, response_body, error)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        params![
+            e.service_id, e.environment_id, e.method, e.url, e.request_headers, e.request_body,
+            e.status, e.status_text, e.time_ms, e.size_bytes, e.content_type,
+            e.response_headers, e.response_body, e.error
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn list_history(conn: &Connection, service_id: i64) -> Result<Vec<HistoryEntry>, AppError> {
+    let mut stmt = conn.prepare("SELECT * FROM history WHERE service_id = ?1 ORDER BY id DESC")?;
+    let rows = stmt.query_map(params![service_id], map_history)?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+pub fn clear_history(conn: &Connection, service_id: i64) -> Result<(), AppError> {
+    conn.execute("DELETE FROM history WHERE service_id = ?1", params![service_id])?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -396,6 +452,42 @@ mod tests {
         )
         .unwrap();
         (svc.id, env.id)
+    }
+
+    #[test]
+    fn history_insert_list_clear() {
+        let conn = db::open_in_memory();
+        let (svc, env) = seed(&conn);
+        assert!(list_history(&conn, svc).unwrap().is_empty());
+
+        let entry = crate::models::NewHistoryEntry {
+            service_id: svc,
+            environment_id: Some(env),
+            method: "GET".into(),
+            url: "http://x/r".into(),
+            request_headers: r#"[{"name":"Authorization","value":"••••"}]"#.into(),
+            request_body: None,
+            status: Some(200),
+            status_text: "OK".into(),
+            time_ms: 12,
+            size_bytes: 34,
+            content_type: Some("application/json".into()),
+            response_headers: "[]".into(),
+            response_body: "{}".into(),
+            error: None,
+        };
+        insert_history(&conn, &entry).unwrap();
+        insert_history(&conn, &entry).unwrap();
+
+        let rows = list_history(&conn, svc).unwrap();
+        assert_eq!(rows.len(), 2);
+        assert!(rows[0].id > rows[1].id); // id DESC
+        assert_eq!(rows[0].status, Some(200));
+        assert_eq!(rows[0].request_headers.len(), 1);
+        assert_eq!(rows[0].request_headers[0].value, "••••");
+
+        clear_history(&conn, svc).unwrap();
+        assert!(list_history(&conn, svc).unwrap().is_empty());
     }
 
     #[test]

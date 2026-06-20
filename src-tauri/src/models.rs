@@ -162,6 +162,28 @@ pub struct AuthStatus {
     pub expires_at: Option<i64>,
 }
 
+/// Entrada de historial tal como la lee el frontend (cabeceras ya parseadas).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryEntry {
+    pub id: i64,
+    pub service_id: i64,
+    pub environment_id: Option<i64>,
+    pub method: String,
+    pub url: String,
+    pub request_headers: Vec<Header>,
+    pub request_body: Option<String>,
+    pub status: Option<i64>,
+    pub status_text: String,
+    pub time_ms: i64,
+    pub size_bytes: i64,
+    pub content_type: Option<String>,
+    pub response_headers: Vec<Header>,
+    pub response_body: String,
+    pub error: Option<String>,
+    pub created_at: String,
+}
+
 /// Entrada de historial lista para insertar (sin id/created_at). Las cabeceras
 /// van serializadas a JSON; la auth ya viene redactada.
 pub struct NewHistoryEntry {
