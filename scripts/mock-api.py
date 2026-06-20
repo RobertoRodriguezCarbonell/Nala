@@ -20,6 +20,17 @@ EXPECTED_TOKEN = "tok_demo_123"
 EXPECTED_API_KEY = "key_demo_123"
 
 
+def _parse_creds(raw, content_type):
+    """Extrae credenciales del cuerpo de login (JSON o form-urlencoded)."""
+    if "application/json" in content_type:
+        try:
+            return json.loads(raw or b"{}")
+        except json.JSONDecodeError:
+            return {}
+    from urllib.parse import parse_qs
+    return {k: v[0] for k, v in parse_qs(raw.decode("utf-8", "ignore")).items()}
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, code, payload=None, raw=None):
         if raw is not None:
@@ -65,10 +76,25 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(404, {"detail": "Not Found"})
 
     def do_POST(self):
-        data = self._read_body()
-        if self.path == "/auth/login":
-            return self._send(200, {"access_token": "tok_demo_123", "token_type": "bearer"})
-        if self.path == "/reservas":
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        raw = self.rfile.read(length) if length else b""
+        path = self.path.split("?", 1)[0]
+
+        if path == "/auth/login":
+            creds = _parse_creds(raw, self.headers.get("Content-Type", ""))
+            if creds.get("username") == "demo" and creds.get("password") == "demo":
+                return self._send(200, {
+                    "access_token": EXPECTED_TOKEN,
+                    "token_type": "bearer",
+                    "expires_in": 30,
+                })
+            return self._send(401, {"detail": "Credenciales inválidas"})
+
+        try:
+            data = json.loads(raw) if raw else {}
+        except json.JSONDecodeError:
+            data = {}
+        if path == "/reservas":
             return self._send(201, {"id": 3, **data})
         return self._send(404, {"detail": "Not Found"})
 
