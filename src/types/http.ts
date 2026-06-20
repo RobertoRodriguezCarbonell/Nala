@@ -24,12 +24,37 @@ export interface AuthContext {
   environmentId: number;
 }
 
+export interface RequestMeta {
+  serviceId: number;
+  environmentId?: number | null;
+}
+
+export interface HistoryEntry {
+  id: number;
+  serviceId: number;
+  environmentId?: number | null;
+  method: string;
+  url: string;
+  requestHeaders: Header[];
+  requestBody?: string | null;
+  status?: number | null;
+  statusText: string;
+  timeMs: number;
+  sizeBytes: number;
+  contentType?: string | null;
+  responseHeaders: Header[];
+  responseBody: string;
+  error?: string | null;
+  createdAt: string;
+}
+
 export interface HttpRequestInput {
   method: string;
   url: string;
   headers: Header[];
   body?: string | null;
   auth?: AuthContext | null;
+  meta?: RequestMeta | null;
 }
 
 export interface AuthStatus {

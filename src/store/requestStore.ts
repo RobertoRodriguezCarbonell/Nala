@@ -242,6 +242,7 @@ export const useRequestStore = create<RequestState>((set, get) => ({
         headers,
         body,
         auth: env?.id != null ? { serviceId: tab.serviceId, environmentId: env.id } : null,
+        meta: { serviceId: tab.serviceId, environmentId: env?.id ?? null },
       });
       patch(id, { sending: false, response, responseTab: "body" });
       if (response.status === 401) {

@@ -3,6 +3,7 @@ import type { NormalizedSpec } from "../types/openapi";
 import type {
   AuthKind,
   AuthStatus,
+  HistoryEntry,
   HttpRequestInput,
   HttpResponse,
   Variable,
@@ -194,4 +195,14 @@ export function reauthenticate(serviceId: number, environmentId: number): Promis
 
 export function forgetCredentials(serviceId: number, environmentId: number): Promise<AuthStatus> {
   return invoke<AuthStatus>("forget_credentials", { serviceId, environmentId });
+}
+
+// ---------- Historial ----------
+
+export function listHistory(serviceId: number): Promise<HistoryEntry[]> {
+  return invoke<HistoryEntry[]>("list_history", { serviceId });
+}
+
+export function clearHistory(serviceId: number): Promise<void> {
+  return invoke<void>("clear_history", { serviceId });
 }
