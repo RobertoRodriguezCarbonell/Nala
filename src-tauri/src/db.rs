@@ -6,7 +6,10 @@ use crate::error::AppError;
 
 /// Migraciones embebidas en orden. El índice + 1 es la versión de cada una;
 /// se aplican comparando contra `PRAGMA user_version`.
-const MIGRATIONS: &[&str] = &[include_str!("../migrations/0001_init.sql")];
+const MIGRATIONS: &[&str] = &[
+    include_str!("../migrations/0001_init.sql"),
+    include_str!("../migrations/0002_services.sql"),
+];
 
 /// Abre (o crea) la base de datos SQLite y aplica las migraciones pendientes.
 pub fn open(path: &Path) -> Result<Connection, AppError> {
