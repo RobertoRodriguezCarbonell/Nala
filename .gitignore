@@ -3,6 +3,7 @@ CLAUDE.md
 .claude/
 .mcp.json
 prompt-claude-design.md
+docs/superpowers/
 
 # --- Node / frontend ---
 node_modules/
