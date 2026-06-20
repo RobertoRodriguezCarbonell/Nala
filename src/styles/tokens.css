@@ -1,0 +1,80 @@
+/*
+ * Tokens de diseño de Nala — derivados del proyecto de Claude Design ("API Hub").
+ * Tema oscuro, flat, alta densidad, bordes de 0.5px. Estética devtool tipo Bruno.
+ *
+ * Nota de marca: el acento funcional de la UI (selección/activo) es el azul #4d8bf0
+ * del sistema de diseño. El índigo #4f46e5 es el color del logo/marca Nala y se usa
+ * en el isotipo del titlebar, no como acento de interfaz.
+ */
+
+:root {
+  /* --- Tipografía --- */
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+
+  /* --- Superficies (de más oscura a más clara) --- */
+  --bg-app: #0a0a0b;        /* fondo principal de la app */
+  --bg-sidebar: #0b0c0e;    /* sidebar izquierda */
+  --bg-tabbar: #0c0d0f;     /* barra de pestañas */
+  --bg-titlebar: #0d0e10;   /* titlebar / inputs */
+  --bg-input: #0d0e10;      /* campos de entrada */
+  --bg-raised: #111316;     /* selector de servicio, chips */
+  --bg-hover: #15171b;      /* hover de superficies elevadas */
+  --bg-row-hover: #101216;  /* hover de filas (sidebar, tablas) */
+  --bg-canvas: #1a1b1e;     /* lienzo exterior (referencia diseño) */
+
+  /* --- Bordes / separadores --- */
+  --border-strong: #2a2e35; /* bordes marcados / scrollbar */
+  --border: #1b1e23;        /* bordes de paneles */
+  --border-subtle: #14171b; /* separadores internos suaves */
+  --border-row: #101316;    /* separadores de fila muy suaves */
+  --border-input: #1f232a;  /* bordes de inputs */
+  --border-control: #242830;/* bordes de botones/selectores */
+  --border-hover: #2f343d;  /* borde en hover */
+
+  /* --- Texto --- */
+  --text-primary: #e6e7ea;
+  --text-secondary: #c4c8cf;
+  --text-muted: #8a8f98;
+  --text-faint: #565f6b;
+  --text-disabled: #3f444c;
+  --text-linenum: #3a3f48;
+
+  /* --- Acento funcional (selección / activo / foco) --- */
+  --accent: #4d8bf0;
+  --accent-hover: #5b96f2;
+  --accent-var: #79b8ff;    /* nombre de variable en interpolaciones {{ }} */
+
+  /* --- Marca Nala --- */
+  --brand-indigo: #4f46e5;  /* fondo del logo */
+
+  /* --- Colores de método HTTP --- */
+  --method-get: #3fb950;
+  --method-get-border: #1f3a24;
+  --method-post: #d29922;
+  --method-post-border: #3a2f12;
+  --method-put: #4d8bf0;
+  --method-put-border: #16294a;
+  --method-patch: #a371f7;
+  --method-patch-border: #2c2147;
+  --method-delete: #f85149;
+  --method-delete-border: #3d1b1b;
+
+  /* --- Colores de estado / familia de status --- */
+  --status-2xx: #3fb950;
+  --status-3xx: #4d8bf0;
+  --status-4xx: #d29922;
+  --status-5xx: #f85149;
+
+  /* --- Tokens de sintaxis (visor JSON / formularios) --- */
+  --syntax-number: #e0af68;
+  --syntax-bool: #56b6c2;
+  --syntax-type: #a371f7;
+  --syntax-required: #f85149;
+
+  /* --- Radios --- */
+  --radius-window: 9px;
+  --radius-control: 6px;
+  --radius-input: 5px;
+  --radius-chip: 4px;
+}
