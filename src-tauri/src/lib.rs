@@ -1,7 +1,11 @@
+mod api;
 mod commands;
 mod db;
 mod error;
 mod keychain;
+mod models;
+mod openapi;
+mod store;
 
 use std::sync::Mutex;
 
@@ -31,6 +35,17 @@ pub fn run() {
             commands::get_setting,
             commands::set_setting,
             commands::ensure_encryption_key,
+            api::create_service,
+            api::list_services,
+            api::update_service,
+            api::delete_service,
+            api::create_environment,
+            api::list_environments,
+            api::update_environment,
+            api::delete_environment,
+            api::list_snapshots,
+            api::import_service,
+            api::get_service_spec,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");
