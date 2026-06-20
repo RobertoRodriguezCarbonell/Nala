@@ -10,7 +10,7 @@ use crate::models::{
 };
 use crate::openapi::{self, NormalizedSpec};
 use crate::AppState;
-use crate::{auth, crypto, http, store};
+use crate::{auth, crypto, http, login, store};
 
 // ---------- Servicios ----------
 
@@ -177,7 +177,49 @@ pub fn delete_variable(state: State<AppState>, id: i64) -> Result<(), AppError> 
 
 // ---------- Auth ----------
 
-/// Estrategia del servicio + si el entorno indicado tiene secreto guardado.
+/// Construye el `AuthStatus` de un servicio/entorno (sin filtrar secretos).
+fn build_auth_status(
+    conn: &rusqlite::Connection,
+    service_id: i64,
+    environment_id: Option<i64>,
+) -> Result<AuthStatus, AppError> {
+    let (kind, config) = store::get_auth_strategy(conn, service_id)?;
+    let config: Value = serde_json::from_str(&config).unwrap_or_else(|_| serde_json::json!({}));
+
+    let (has_secret, token_state, remember_credentials, has_credentials, expires_at) =
+        match environment_id {
+            Some(env) => {
+                let row = store::get_environment_auth(conn, env)?;
+                let now = login::now_epoch();
+                let token_state = match &row.cached_token {
+                    None => "none",
+                    Some(_) => match row.token_expires_at {
+                        Some(e) if e <= now => "expired",
+                        _ => "valid",
+                    },
+                };
+                (
+                    row.secret.is_some(),
+                    token_state.to_string(),
+                    row.remember_credentials,
+                    row.credentials.is_some(),
+                    row.token_expires_at,
+                )
+            }
+            None => (false, "none".to_string(), false, false, None),
+        };
+
+    Ok(AuthStatus {
+        kind,
+        config,
+        has_secret,
+        token_state,
+        remember_credentials,
+        has_credentials,
+        expires_at,
+    })
+}
+
 #[tauri::command]
 pub fn get_auth(
     state: State<AppState>,
@@ -185,13 +227,7 @@ pub fn get_auth(
     environment_id: Option<i64>,
 ) -> Result<AuthStatus, AppError> {
     let conn = state.db.lock().expect("db lock");
-    let (kind, config) = store::get_auth_strategy(&conn, service_id)?;
-    let has_secret = match environment_id {
-        Some(env) => store::get_environment_secret(&conn, env)?.is_some(),
-        None => false,
-    };
-    let config: Value = serde_json::from_str(&config).unwrap_or_else(|_| serde_json::json!({}));
-    Ok(AuthStatus { kind, config, has_secret })
+    build_auth_status(&conn, service_id, environment_id)
 }
 
 #[tauri::command]

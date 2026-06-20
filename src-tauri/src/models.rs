@@ -138,12 +138,16 @@ pub struct HttpResponse {
     pub content_type: Option<String>,
 }
 
-/// Estado de auth que ve el frontend: estrategia del servicio + si el entorno
-/// consultado tiene secreto. El secreto en claro nunca se serializa.
+/// Estado de auth que ve el frontend: estrategia del servicio + estados del
+/// entorno consultado. Nunca incluye el secreto/token/credenciales en claro.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthStatus {
     pub kind: String,
     pub config: serde_json::Value,
     pub has_secret: bool,
+    pub token_state: String, // "none" | "valid" | "expired"
+    pub remember_credentials: bool,
+    pub has_credentials: bool,
+    pub expires_at: Option<i64>,
 }

@@ -302,6 +302,81 @@ pub fn clear_environment_secret(conn: &Connection, environment_id: i64) -> Resul
     Ok(())
 }
 
+/// Fila de `environment_auth` con los campos de auth de un entorno (cifrados).
+/// Todos los textos son ciphertext; el descifrado ocurre en la capa de comandos.
+#[derive(Debug, Clone, Default)]
+pub struct EnvAuthRow {
+    pub secret: Option<String>,
+    pub cached_token: Option<String>,
+    pub token_expires_at: Option<i64>,
+    pub remember_credentials: bool,
+    pub credentials: Option<String>,
+}
+
+/// Lee la fila de auth de un entorno; valores por defecto si no existe.
+pub fn get_environment_auth(conn: &Connection, environment_id: i64) -> Result<EnvAuthRow, AppError> {
+    let row = conn
+        .query_row(
+            "SELECT secret, cached_token, token_expires_at, remember_credentials, credentials
+             FROM environment_auth WHERE environment_id = ?1",
+            params![environment_id],
+            |r| {
+                Ok(EnvAuthRow {
+                    secret: r.get(0)?,
+                    cached_token: r.get(1)?,
+                    token_expires_at: r.get(2)?,
+                    remember_credentials: r.get::<_, i64>(3)? != 0,
+                    credentials: r.get(4)?,
+                })
+            },
+        )
+        .ok();
+    Ok(row.unwrap_or_default())
+}
+
+pub fn set_environment_token(
+    conn: &Connection,
+    environment_id: i64,
+    cipher: &str,
+    expires_at: Option<i64>,
+) -> Result<(), AppError> {
+    conn.execute(
+        "INSERT INTO environment_auth (environment_id, cached_token, token_expires_at)
+         VALUES (?1, ?2, ?3)
+         ON CONFLICT(environment_id)
+         DO UPDATE SET cached_token = excluded.cached_token,
+                       token_expires_at = excluded.token_expires_at",
+        params![environment_id, cipher, expires_at],
+    )?;
+    Ok(())
+}
+
+pub fn clear_environment_token(conn: &Connection, environment_id: i64) -> Result<(), AppError> {
+    conn.execute(
+        "UPDATE environment_auth SET cached_token = NULL, token_expires_at = NULL
+         WHERE environment_id = ?1",
+        params![environment_id],
+    )?;
+    Ok(())
+}
+
+pub fn set_environment_credentials(
+    conn: &Connection,
+    environment_id: i64,
+    cipher: Option<&str>,
+    remember: bool,
+) -> Result<(), AppError> {
+    conn.execute(
+        "INSERT INTO environment_auth (environment_id, credentials, remember_credentials)
+         VALUES (?1, ?2, ?3)
+         ON CONFLICT(environment_id)
+         DO UPDATE SET credentials = excluded.credentials,
+                       remember_credentials = excluded.remember_credentials",
+        params![environment_id, cipher, remember as i64],
+    )?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -355,5 +430,37 @@ mod tests {
         assert_eq!(get_environment_secret(&conn, env).unwrap(), Some("cipher==".to_string()));
         clear_environment_secret(&conn, env).unwrap();
         assert_eq!(get_environment_secret(&conn, env).unwrap(), None);
+    }
+
+    #[test]
+    fn environment_token_set_get_clear() {
+        let conn = db::open_in_memory();
+        let (_svc, env) = seed(&conn);
+        assert!(get_environment_auth(&conn, env).unwrap().cached_token.is_none());
+
+        set_environment_token(&conn, env, "tok_cipher", Some(4600)).unwrap();
+        let row = get_environment_auth(&conn, env).unwrap();
+        assert_eq!(row.cached_token.as_deref(), Some("tok_cipher"));
+        assert_eq!(row.token_expires_at, Some(4600));
+
+        clear_environment_token(&conn, env).unwrap();
+        let row = get_environment_auth(&conn, env).unwrap();
+        assert!(row.cached_token.is_none());
+        assert!(row.token_expires_at.is_none());
+    }
+
+    #[test]
+    fn environment_credentials_remember_and_forget() {
+        let conn = db::open_in_memory();
+        let (_svc, env) = seed(&conn);
+        set_environment_credentials(&conn, env, Some("creds_cipher"), true).unwrap();
+        let row = get_environment_auth(&conn, env).unwrap();
+        assert!(row.remember_credentials);
+        assert_eq!(row.credentials.as_deref(), Some("creds_cipher"));
+
+        set_environment_credentials(&conn, env, None, false).unwrap();
+        let row = get_environment_auth(&conn, env).unwrap();
+        assert!(!row.remember_credentials);
+        assert!(row.credentials.is_none());
     }
 }
