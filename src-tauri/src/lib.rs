@@ -1,3 +1,4 @@
+mod auth;
 mod api;
 mod commands;
 mod crypto;

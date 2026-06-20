@@ -103,7 +103,16 @@ pub struct Header {
     pub value: String,
 }
 
-/// Petición HTTP ya resuelta (URL e interpolación hechas en el frontend en F3).
+/// Contexto para que Rust inyecte la auth del servicio/entorno al enviar.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthContext {
+    pub service_id: i64,
+    pub environment_id: i64,
+}
+
+/// Petición HTTP ya resuelta (URL e interpolación hechas en el frontend).
+/// `auth` es opcional: si llega, Rust inyecta la credencial antes de enviar.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HttpRequestInput {
@@ -112,6 +121,8 @@ pub struct HttpRequestInput {
     #[serde(default)]
     pub headers: Vec<Header>,
     pub body: Option<String>,
+    #[serde(default)]
+    pub auth: Option<AuthContext>,
 }
 
 /// Respuesta HTTP con métricas para el visor.
@@ -125,4 +136,14 @@ pub struct HttpResponse {
     pub time_ms: u64,
     pub size_bytes: u64,
     pub content_type: Option<String>,
+}
+
+/// Estado de auth que ve el frontend: estrategia del servicio + si el entorno
+/// consultado tiene secreto. El secreto en claro nunca se serializa.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthStatus {
+    pub kind: String,
+    pub config: serde_json::Value,
+    pub has_secret: bool,
 }
