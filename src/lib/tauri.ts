@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { NormalizedSpec } from "../types/openapi";
+import type { SchemaDiff } from "../types/diff";
 import type {
   AuthKind,
   AuthStatus,
@@ -215,4 +216,14 @@ export function generateTypes(serviceId: number): Promise<string> {
 
 export function exportTypes(serviceId: number): Promise<boolean> {
   return invoke<boolean>("export_types", { serviceId });
+}
+
+// ---------- Diff de esquemas ----------
+
+export function diffSnapshots(
+  serviceId: number,
+  fromId: number,
+  toId: number
+): Promise<SchemaDiff> {
+  return invoke<SchemaDiff>("diff_snapshots", { serviceId, fromId, toId });
 }
