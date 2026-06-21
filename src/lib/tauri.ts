@@ -206,3 +206,13 @@ export function listHistory(serviceId: number): Promise<HistoryEntry[]> {
 export function clearHistory(serviceId: number): Promise<void> {
   return invoke<void>("clear_history", { serviceId });
 }
+
+// ---------- Codegen de tipos TS ----------
+
+export function generateTypes(serviceId: number): Promise<string> {
+  return invoke<string>("generate_types", { serviceId });
+}
+
+export function writeTextFile(path: string, contents: string): Promise<void> {
+  return invoke<void>("write_text_file", { path, contents });
+}
