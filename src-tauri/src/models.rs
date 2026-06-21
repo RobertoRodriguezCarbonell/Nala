@@ -117,6 +117,8 @@ pub struct AuthContext {
 pub struct RequestMeta {
     pub service_id: i64,
     pub environment_id: Option<i64>,
+    #[serde(default)]
+    pub skip_history: bool,
 }
 
 /// Petición HTTP ya resuelta (URL e interpolación hechas en el frontend).

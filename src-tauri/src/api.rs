@@ -435,7 +435,11 @@ pub async fn send_request(
 
     // Snapshot redactado del request final (antes de mover `input` al envío).
     let meta = input.meta.clone();
-    let snapshot = meta.as_ref().map(|_| history::redact_request(&input, &injection));
+    // Si la petición pide saltar historial (p. ej. smoke), no se compone el snapshot.
+    let snapshot = meta
+        .as_ref()
+        .filter(|m| !m.skip_history)
+        .map(|_| history::redact_request(&input, &injection));
 
     let result = http::send_request(input).await;
 
