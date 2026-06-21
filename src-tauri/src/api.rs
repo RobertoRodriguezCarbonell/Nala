@@ -526,3 +526,55 @@ pub fn export_types(
         None => Ok(false),
     }
 }
+
+// ---------- Diff de esquemas ----------
+
+fn snapshot_ref(m: &crate::models::SnapshotMeta) -> openapi::SnapshotRef {
+    openapi::SnapshotRef {
+        id: m.id,
+        api_version: m.api_version.clone(),
+        fetched_at: m.fetched_at.clone(),
+        endpoint_count: m.endpoint_count,
+    }
+}
+
+/// Compara dos snapshots de un servicio y devuelve el diff de esquema.
+#[tauri::command]
+pub fn diff_snapshots(
+    state: State<AppState>,
+    service_id: i64,
+    from_id: i64,
+    to_id: i64,
+) -> Result<openapi::SchemaDiff, AppError> {
+    let conn = state.db.lock().expect("db lock");
+
+    let metas = store::list_snapshots(&conn, service_id)?;
+    let from_meta = metas
+        .iter()
+        .find(|m| m.id == from_id)
+        .ok_or_else(|| AppError::NotFound(format!("snapshot {from_id} no encontrado")))?;
+    let to_meta = metas
+        .iter()
+        .find(|m| m.id == to_id)
+        .ok_or_else(|| AppError::NotFound(format!("snapshot {to_id} no encontrado")))?;
+
+    let from_raw = store::raw_spec_by_id(&conn, service_id, from_id)?
+        .ok_or_else(|| AppError::NotFound(format!("snapshot {from_id} sin spec")))?;
+    let to_raw = store::raw_spec_by_id(&conn, service_id, to_id)?
+        .ok_or_else(|| AppError::NotFound(format!("snapshot {to_id} sin spec")))?;
+
+    let from_value: Value =
+        serde_json::from_str(&from_raw).map_err(|e| AppError::Spec(e.to_string()))?;
+    let to_value: Value =
+        serde_json::from_str(&to_raw).map_err(|e| AppError::Spec(e.to_string()))?;
+
+    let from_spec = openapi::normalize(&from_value)?;
+    let to_spec = openapi::normalize(&to_value)?;
+
+    Ok(openapi::diff_specs(
+        snapshot_ref(from_meta),
+        snapshot_ref(to_meta),
+        &from_spec,
+        &to_spec,
+    ))
+}
