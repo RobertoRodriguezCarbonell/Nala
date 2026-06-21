@@ -15,8 +15,8 @@ interface UiState {
   /** Nº de aperturas de la app (persistido en SQLite). Prueba de persistencia. */
   launchCount: number;
   /** Vista activa del panel central a nivel de servicio. */
-  serviceView: "endpoints" | "history" | "types";
-  setServiceView: (v: "endpoints" | "history" | "types") => void;
+  serviceView: "endpoints" | "diff" | "types" | "history";
+  setServiceView: (v: "endpoints" | "diff" | "types" | "history") => void;
   /** Ancho (px) del panel de respuesta; persistido en settings. */
   responseWidth: number;
   setResponseWidth: (w: number) => void;

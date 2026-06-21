@@ -6,6 +6,7 @@ import { RequestBuilder } from "../builder/RequestBuilder";
 import { ServiceTabBar } from "./ServiceTabBar";
 import { HistoryTab } from "../history/HistoryTab";
 import { TypesTab } from "../types/TypesTab";
+import { DiffTab } from "../diff/DiffTab";
 import { FolderIcon, PlusIcon } from "../icons";
 
 /**
@@ -46,6 +47,14 @@ export function CenterPanel() {
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para generar los tipos de su servicio.</span>
+              </div>
+            )
+          ) : serviceView === "diff" ? (
+            activeServiceId != null ? (
+              <DiffTab serviceId={activeServiceId} />
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para comparar los snapshots de su servicio.</span>
               </div>
             )
           ) : (

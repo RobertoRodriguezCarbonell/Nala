@@ -67,6 +67,7 @@ pub fn run() {
             api::clear_history,
             api::generate_types,
             api::export_types,
+            api::diff_snapshots,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");

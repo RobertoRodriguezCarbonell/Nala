@@ -2,10 +2,12 @@
 //! e independiente de versión (3.0 / 3.1) que el frontend solo tiene que pintar.
 
 mod codegen;
+mod diff;
 mod fetch;
 mod normalize;
 
 pub use codegen::generate_typescript;
+pub use diff::{diff_specs, Change, SchemaDiff, SnapshotRef};
 pub use fetch::fetch_spec;
 pub use normalize::normalize;
 

@@ -176,6 +176,23 @@ pub fn latest_raw_spec(conn: &Connection, service_id: i64) -> Result<Option<Stri
     Ok(spec)
 }
 
+/// Devuelve el `raw_spec` de un snapshot concreto, validando que pertenece al
+/// servicio indicado.
+pub fn raw_spec_by_id(
+    conn: &Connection,
+    service_id: i64,
+    snapshot_id: i64,
+) -> Result<Option<String>, AppError> {
+    let spec = conn
+        .query_row(
+            "SELECT raw_spec FROM schema_snapshots WHERE id = ?1 AND service_id = ?2",
+            params![snapshot_id, service_id],
+            |row| row.get::<_, String>(0),
+        )
+        .ok();
+    Ok(spec)
+}
+
 // ---------- Variables ----------
 
 fn map_variable(row: &Row) -> rusqlite::Result<Variable> {
