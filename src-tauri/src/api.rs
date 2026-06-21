@@ -465,3 +465,27 @@ pub fn clear_history(state: State<AppState>, service_id: i64) -> Result<(), AppE
     let conn = state.db.lock().expect("db lock");
     store::clear_history(&conn, service_id)
 }
+
+// ---------- Codegen de tipos TS ----------
+
+/// Genera el `.ts` de los modelos del último snapshot de un servicio.
+#[tauri::command]
+pub fn generate_types(state: State<AppState>, service_id: i64) -> Result<String, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    match store::latest_raw_spec(&conn, service_id)? {
+        Some(raw) => {
+            let value: Value =
+                serde_json::from_str(&raw).map_err(|e| AppError::Spec(e.to_string()))?;
+            Ok(openapi::generate_typescript(&value))
+        }
+        None => Err(AppError::NotFound(
+            "no hay snapshot: importa el servicio primero".into(),
+        )),
+    }
+}
+
+/// Escribe texto UTF-8 en una ruta (exportar los tipos generados a disco).
+#[tauri::command]
+pub fn write_text_file(path: String, contents: String) -> Result<(), AppError> {
+    std::fs::write(&path, contents).map_err(|e| AppError::Other(e.to_string()))
+}

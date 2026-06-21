@@ -24,6 +24,7 @@ pub struct AppState {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Carpeta de datos de la app (AppData\Roaming\com.nala.desktop en Windows).
             let dir = app.path().app_data_dir()?;
@@ -64,6 +65,8 @@ pub fn run() {
             api::forget_credentials,
             api::list_history,
             api::clear_history,
+            api::generate_types,
+            api::write_text_file,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");
