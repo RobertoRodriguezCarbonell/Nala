@@ -5,8 +5,8 @@ use rusqlite::{params, Connection, Row};
 
 use crate::error::AppError;
 use crate::models::{
-    Environment, EnvironmentInput, Header, HistoryEntry, Service, ServiceInput, SnapshotMeta,
-    Variable, VariableInput,
+    Environment, EnvironmentInput, Header, HistoryEntry, SavedRequest, SavedRequestInput, Service,
+    ServiceInput, SnapshotMeta, Variable, VariableInput,
 };
 use crate::models::NewHistoryEntry;
 
@@ -441,11 +441,90 @@ pub fn clear_history(conn: &Connection, service_id: i64) -> Result<(), AppError>
     Ok(())
 }
 
+// ---------- Peticiones guardadas ----------
+
+fn map_saved_request(row: &Row) -> rusqlite::Result<SavedRequest> {
+    Ok(SavedRequest {
+        id: row.get("id")?,
+        service_id: row.get("service_id")?,
+        name: row.get("name")?,
+        method: row.get("method")?,
+        path: row.get("path")?,
+        operation_id: row.get("operation_id")?,
+        draft_json: row.get("draft_json")?,
+        is_smoke: row.get("is_smoke")?,
+        expected_status: row.get("expected_status")?,
+        created_at: row.get("created_at")?,
+        updated_at: row.get("updated_at")?,
+    })
+}
+
+pub fn create_saved_request(
+    conn: &Connection,
+    input: &SavedRequestInput,
+) -> Result<SavedRequest, AppError> {
+    conn.execute(
+        "INSERT INTO saved_requests
+         (service_id, name, method, path, operation_id, draft_json, is_smoke, expected_status)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![
+            input.service_id,
+            input.name,
+            input.method,
+            input.path,
+            input.operation_id,
+            input.draft_json,
+            input.is_smoke,
+            input.expected_status
+        ],
+    )?;
+    get_saved_request(conn, conn.last_insert_rowid())
+}
+
+pub fn get_saved_request(conn: &Connection, id: i64) -> Result<SavedRequest, AppError> {
+    conn.query_row(
+        "SELECT * FROM saved_requests WHERE id = ?1",
+        params![id],
+        map_saved_request,
+    )
+    .map_err(|_| AppError::NotFound(format!("petición guardada {id}")))
+}
+
+pub fn list_saved_requests(
+    conn: &Connection,
+    service_id: i64,
+) -> Result<Vec<SavedRequest>, AppError> {
+    let mut stmt = conn.prepare("SELECT * FROM saved_requests WHERE service_id = ?1 ORDER BY id")?;
+    let rows = stmt.query_map(params![service_id], map_saved_request)?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+pub fn update_saved_request(
+    conn: &Connection,
+    id: i64,
+    name: &str,
+    is_smoke: bool,
+    expected_status: &str,
+) -> Result<SavedRequest, AppError> {
+    conn.execute(
+        "UPDATE saved_requests
+         SET name = ?1, is_smoke = ?2, expected_status = ?3, updated_at = datetime('now')
+         WHERE id = ?4",
+        params![name, is_smoke, expected_status, id],
+    )?;
+    get_saved_request(conn, id)
+}
+
+pub fn delete_saved_request(conn: &Connection, id: i64) -> Result<(), AppError> {
+    conn.execute("DELETE FROM saved_requests WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::db;
-    use crate::models::{EnvironmentInput, ServiceInput};
+    use crate::models::{EnvironmentInput, SavedRequestInput, ServiceInput};
 
     fn seed(conn: &Connection) -> (i64, i64) {
         let svc = create_service(
@@ -557,5 +636,46 @@ mod tests {
         let row = get_environment_auth(&conn, env).unwrap();
         assert!(!row.remember_credentials);
         assert!(row.credentials.is_none());
+    }
+
+    #[test]
+    fn saved_requests_roundtrip() {
+        let conn = db::open_in_memory();
+        let svc = create_service(
+            &conn,
+            &ServiceInput {
+                name: "S".into(),
+                group_name: None,
+                color: None,
+                icon: None,
+                spec_path: "/openapi.json".into(),
+            },
+        )
+        .unwrap();
+
+        let input = SavedRequestInput {
+            service_id: svc.id,
+            name: "smoke".into(),
+            method: "GET".into(),
+            path: "/x".into(),
+            operation_id: None,
+            draft_json: "{}".into(),
+            is_smoke: true,
+            expected_status: "2xx".into(),
+        };
+        let created = create_saved_request(&conn, &input).unwrap();
+        assert_eq!(created.name, "smoke");
+        assert!(created.is_smoke);
+
+        let list = list_saved_requests(&conn, svc.id).unwrap();
+        assert_eq!(list.len(), 1);
+
+        let updated = update_saved_request(&conn, created.id, "renombrada", false, "201").unwrap();
+        assert_eq!(updated.name, "renombrada");
+        assert!(!updated.is_smoke);
+        assert_eq!(updated.expected_status, "201");
+
+        delete_saved_request(&conn, created.id).unwrap();
+        assert!(list_saved_requests(&conn, svc.id).unwrap().is_empty());
     }
 }
