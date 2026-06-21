@@ -10,6 +10,7 @@ import type {
   Variable,
   VariableInput,
 } from "../types/http";
+import type { SavedRequest, SavedRequestInput } from "../types/saved";
 
 /**
  * Capa fina sobre los comandos de Tauri (backend Rust).
@@ -226,4 +227,27 @@ export function diffSnapshots(
   toId: number
 ): Promise<SchemaDiff> {
   return invoke<SchemaDiff>("diff_snapshots", { serviceId, fromId, toId });
+}
+
+// ---------- Peticiones guardadas / smoke ----------
+
+export function createSavedRequest(input: SavedRequestInput): Promise<SavedRequest> {
+  return invoke<SavedRequest>("create_saved_request", { input });
+}
+
+export function listSavedRequests(serviceId: number): Promise<SavedRequest[]> {
+  return invoke<SavedRequest[]>("list_saved_requests", { serviceId });
+}
+
+export function updateSavedRequest(
+  id: number,
+  name: string,
+  isSmoke: boolean,
+  expectedStatus: string
+): Promise<SavedRequest> {
+  return invoke<SavedRequest>("update_saved_request", { id, name, isSmoke, expectedStatus });
+}
+
+export function deleteSavedRequest(id: number): Promise<void> {
+  return invoke<void>("delete_saved_request", { id });
 }
