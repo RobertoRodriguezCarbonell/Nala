@@ -5,6 +5,7 @@ import { RequestTabs } from "../builder/RequestTabs";
 import { RequestBuilder } from "../builder/RequestBuilder";
 import { ServiceTabBar } from "./ServiceTabBar";
 import { HistoryTab } from "../history/HistoryTab";
+import { TypesTab } from "../types/TypesTab";
 import { FolderIcon, PlusIcon } from "../icons";
 
 /**
@@ -37,6 +38,14 @@ export function CenterPanel() {
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para ver el historial de su servicio.</span>
+              </div>
+            )
+          ) : serviceView === "types" ? (
+            activeServiceId != null ? (
+              <TypesTab serviceId={activeServiceId} />
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para generar los tipos de su servicio.</span>
               </div>
             )
           ) : (

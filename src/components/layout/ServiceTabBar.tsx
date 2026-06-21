@@ -1,7 +1,8 @@
 import { useUiStore } from "../../store/uiStore";
 
-const TABS: { key: "endpoints" | "history"; label: string }[] = [
+const TABS: { key: "endpoints" | "types" | "history"; label: string }[] = [
   { key: "endpoints", label: "Endpoints" },
+  { key: "types", label: "Tipos TS" },
   { key: "history", label: "Historial" },
 ];
 
