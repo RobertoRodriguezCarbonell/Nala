@@ -31,7 +31,7 @@ export default function App() {
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <Sidebar />
         <CenterPanel />
-        {serviceView !== "history" && (
+        {serviceView === "endpoints" && (
           <>
             <ResizeHandle />
             <ResponsePanel />
