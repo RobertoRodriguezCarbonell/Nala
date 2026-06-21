@@ -213,6 +213,6 @@ export function generateTypes(serviceId: number): Promise<string> {
   return invoke<string>("generate_types", { serviceId });
 }
 
-export function writeTextFile(path: string, contents: string): Promise<void> {
-  return invoke<void>("write_text_file", { path, contents });
+export function exportTypes(serviceId: number): Promise<boolean> {
+  return invoke<boolean>("export_types", { serviceId });
 }

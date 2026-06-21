@@ -1,7 +1,8 @@
 //! Comandos Tauri: CRUD de servicios/entornos, OpenAPI, variables, auth y envío.
 
 use serde_json::Value;
-use tauri::State;
+use tauri::{AppHandle, State};
+use tauri_plugin_dialog::DialogExt;
 
 use crate::error::AppError;
 use crate::models::{
@@ -484,8 +485,44 @@ pub fn generate_types(state: State<AppState>, service_id: i64) -> Result<String,
     }
 }
 
-/// Escribe texto UTF-8 en una ruta (exportar los tipos generados a disco).
+/// Genera los tipos del servicio y los exporta a un `.ts` elegido por el
+/// usuario. El diálogo de guardado se abre desde Rust: ninguna ruta cruza el
+/// puente IPC. Devuelve `true` si se guardó, `false` si el usuario canceló.
 #[tauri::command]
-pub fn write_text_file(path: String, contents: String) -> Result<(), AppError> {
-    std::fs::write(&path, contents).map_err(|e| AppError::Other(e.to_string()))
+pub fn export_types(
+    app: AppHandle,
+    state: State<AppState>,
+    service_id: i64,
+) -> Result<bool, AppError> {
+    let ts = {
+        let conn = state.db.lock().expect("db lock");
+        match store::latest_raw_spec(&conn, service_id)? {
+            Some(raw) => {
+                let value: Value =
+                    serde_json::from_str(&raw).map_err(|e| AppError::Spec(e.to_string()))?;
+                openapi::generate_typescript(&value)
+            }
+            None => {
+                return Err(AppError::NotFound(
+                    "no hay snapshot: importa el servicio primero".into(),
+                ))
+            }
+        }
+    };
+
+    let chosen = app
+        .dialog()
+        .file()
+        .add_filter("TypeScript", &["ts"])
+        .set_file_name("tipos.ts")
+        .blocking_save_file();
+
+    match chosen {
+        Some(file) => {
+            let path = file.into_path().map_err(|e| AppError::Other(e.to_string()))?;
+            std::fs::write(&path, ts).map_err(|e| AppError::Other(e.to_string()))?;
+            Ok(true)
+        }
+        None => Ok(false),
+    }
 }
