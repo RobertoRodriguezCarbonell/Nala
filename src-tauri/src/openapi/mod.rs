@@ -1,9 +1,11 @@
 //! Motor OpenAPI: fetch del spec, parseo y normalización a un modelo digerido
 //! e independiente de versión (3.0 / 3.1) que el frontend solo tiene que pintar.
 
+mod codegen;
 mod fetch;
 mod normalize;
 
+pub use codegen::generate_typescript;
 pub use fetch::fetch_spec;
 pub use normalize::normalize;
 
