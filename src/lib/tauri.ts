@@ -219,6 +219,14 @@ export function exportTypes(serviceId: number): Promise<boolean> {
   return invoke<boolean>("export_types", { serviceId });
 }
 
+export function generateClient(serviceId: number): Promise<string> {
+  return invoke<string>("generate_client", { serviceId });
+}
+
+export function exportClient(serviceId: number): Promise<boolean> {
+  return invoke<boolean>("export_client", { serviceId });
+}
+
 // ---------- Diff de esquemas ----------
 
 export function diffSnapshots(

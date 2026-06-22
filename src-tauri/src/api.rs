@@ -532,6 +532,61 @@ pub fn export_types(
     }
 }
 
+// ---------- Codegen de cliente TS ----------
+
+/// Genera el cliente TS del último snapshot de un servicio.
+#[tauri::command]
+pub fn generate_client(state: State<AppState>, service_id: i64) -> Result<String, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    match store::latest_raw_spec(&conn, service_id)? {
+        Some(raw) => {
+            let value: Value =
+                serde_json::from_str(&raw).map_err(|e| AppError::Spec(e.to_string()))?;
+            Ok(openapi::generate_client(&value))
+        }
+        None => Err(AppError::NotFound(
+            "no hay snapshot: importa el servicio primero".into(),
+        )),
+    }
+}
+
+/// Genera el cliente TS y lo exporta a un `.ts` elegido por el usuario (diálogo
+/// nativo desde Rust: ninguna ruta cruza el puente IPC).
+#[tauri::command]
+pub fn export_client(app: AppHandle, state: State<AppState>, service_id: i64) -> Result<bool, AppError> {
+    let ts = {
+        let conn = state.db.lock().expect("db lock");
+        match store::latest_raw_spec(&conn, service_id)? {
+            Some(raw) => {
+                let value: Value =
+                    serde_json::from_str(&raw).map_err(|e| AppError::Spec(e.to_string()))?;
+                openapi::generate_client(&value)
+            }
+            None => {
+                return Err(AppError::NotFound(
+                    "no hay snapshot: importa el servicio primero".into(),
+                ))
+            }
+        }
+    };
+
+    let chosen = app
+        .dialog()
+        .file()
+        .add_filter("TypeScript", &["ts"])
+        .set_file_name("cliente.ts")
+        .blocking_save_file();
+
+    match chosen {
+        Some(file) => {
+            let path = file.into_path().map_err(|e| AppError::Other(e.to_string()))?;
+            std::fs::write(&path, ts).map_err(|e| AppError::Other(e.to_string()))?;
+            Ok(true)
+        }
+        None => Ok(false),
+    }
+}
+
 // ---------- Diff de esquemas ----------
 
 fn snapshot_ref(m: &crate::models::SnapshotMeta) -> openapi::SnapshotRef {
