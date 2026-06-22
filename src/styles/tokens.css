@@ -72,6 +72,22 @@
   --syntax-type: #a371f7;
   --syntax-required: #f85149;
 
+  /* --- Escala de tipografía --- */
+  --text-micro: 10.5px;
+  --text-xs: 11.5px;
+  --text-sm: 12.5px;
+  --text-md: 13px;
+  --text-lg: 14px;
+
+  /* --- Escala de espaciado --- */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 18px;
+
   /* --- Radios --- */
   --radius-window: 9px;
   --radius-control: 6px;
