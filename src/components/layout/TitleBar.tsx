@@ -46,7 +46,7 @@ export function TitleBar() {
     >
       <div data-tauri-drag-region style={{ display: "flex", alignItems: "center", gap: 9, pointerEvents: "none" }}>
         <Logo size={14} />
-        <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Nala</span>
+        <span style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", fontWeight: 500 }}>Nala</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
         <ControlButton onClick={() => appWindow.minimize()}>

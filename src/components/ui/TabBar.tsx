@@ -29,7 +29,7 @@ export function TabBar({
           >
             {t.label}
             {t.badge != null && (
-              <span className="mono" style={{ fontSize: 9.5, color: "var(--bg-app)", background: "var(--accent)", borderRadius: 8, padding: "0 5px", fontWeight: 600 }}>{t.badge}</span>
+              <span className="mono" style={{ fontSize: "var(--text-nano)", color: "var(--bg-app)", background: "var(--accent)", borderRadius: 8, padding: "0 5px", fontWeight: 600 }}>{t.badge}</span>
             )}
             {t.help && <HelpTip text={t.help} />}
           </div>
@@ -49,7 +49,7 @@ function HelpTip({ text }: { text: string }) {
         onMouseLeave={() => setOpen(false)}
         onClick={(e) => e.stopPropagation()}
         aria-label="Qué hace esta pestaña"
-        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 13, height: 13, borderRadius: "50%", border: "0.5px solid var(--border-control)", fontSize: 9, lineHeight: 1, color: open ? "var(--text-primary)" : "var(--text-disabled)", cursor: "help", userSelect: "none" }}
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 13, height: 13, borderRadius: "50%", border: "0.5px solid var(--border-control)", fontSize: "var(--text-nano)", lineHeight: 1, color: open ? "var(--text-primary)" : "var(--text-disabled)", cursor: "help", userSelect: "none" }}
       >
         ?
       </span>
