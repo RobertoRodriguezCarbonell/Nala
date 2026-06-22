@@ -5,8 +5,8 @@ use rusqlite::{params, Connection, Row};
 
 use crate::error::AppError;
 use crate::models::{
-    Environment, EnvironmentInput, Header, HistoryEntry, SavedRequest, SavedRequestInput, Service,
-    ServiceInput, SnapshotMeta, Variable, VariableInput,
+    Environment, EnvironmentInput, Header, HistoryEntry, SavedRequest, SavedRequestInput, Sequence,
+    SequenceInput, Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
 };
 use crate::models::NewHistoryEntry;
 
@@ -520,11 +520,61 @@ pub fn delete_saved_request(conn: &Connection, id: i64) -> Result<(), AppError> 
     Ok(())
 }
 
+// ---------- Secuencias ----------
+
+fn map_sequence(row: &Row) -> rusqlite::Result<Sequence> {
+    Ok(Sequence {
+        id: row.get("id")?,
+        service_id: row.get("service_id")?,
+        name: row.get("name")?,
+        steps_json: row.get("steps_json")?,
+        created_at: row.get("created_at")?,
+        updated_at: row.get("updated_at")?,
+    })
+}
+
+pub fn create_sequence(conn: &Connection, input: &SequenceInput) -> Result<Sequence, AppError> {
+    conn.execute(
+        "INSERT INTO sequences (service_id, name, steps_json) VALUES (?1, ?2, ?3)",
+        params![input.service_id, input.name, input.steps_json],
+    )?;
+    get_sequence(conn, conn.last_insert_rowid())
+}
+
+pub fn get_sequence(conn: &Connection, id: i64) -> Result<Sequence, AppError> {
+    conn.query_row("SELECT * FROM sequences WHERE id = ?1", params![id], map_sequence)
+        .map_err(|_| AppError::NotFound(format!("secuencia {id}")))
+}
+
+pub fn list_sequences(conn: &Connection, service_id: i64) -> Result<Vec<Sequence>, AppError> {
+    let mut stmt = conn.prepare("SELECT * FROM sequences WHERE service_id = ?1 ORDER BY id")?;
+    let rows = stmt.query_map(params![service_id], map_sequence)?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+pub fn update_sequence(
+    conn: &Connection,
+    id: i64,
+    name: &str,
+    steps_json: &str,
+) -> Result<Sequence, AppError> {
+    conn.execute(
+        "UPDATE sequences SET name = ?1, steps_json = ?2, updated_at = datetime('now') WHERE id = ?3",
+        params![name, steps_json, id],
+    )?;
+    get_sequence(conn, id)
+}
+
+pub fn delete_sequence(conn: &Connection, id: i64) -> Result<(), AppError> {
+    conn.execute("DELETE FROM sequences WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::db;
-    use crate::models::{EnvironmentInput, SavedRequestInput, ServiceInput};
+    use crate::models::{EnvironmentInput, SavedRequestInput, SequenceInput, ServiceInput};
 
     fn seed(conn: &Connection) -> (i64, i64) {
         let svc = create_service(
@@ -677,5 +727,41 @@ mod tests {
 
         delete_saved_request(&conn, created.id).unwrap();
         assert!(list_saved_requests(&conn, svc.id).unwrap().is_empty());
+    }
+
+    #[test]
+    fn sequences_roundtrip() {
+        let conn = db::open_in_memory();
+        let svc = create_service(
+            &conn,
+            &ServiceInput {
+                name: "S".into(),
+                group_name: None,
+                color: None,
+                icon: None,
+                spec_path: "/openapi.json".into(),
+            },
+        )
+        .unwrap();
+
+        let created = create_sequence(
+            &conn,
+            &SequenceInput {
+                service_id: svc.id,
+                name: "Login y listar".into(),
+                steps_json: "[]".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(created.name, "Login y listar");
+
+        assert_eq!(list_sequences(&conn, svc.id).unwrap().len(), 1);
+
+        let updated = update_sequence(&conn, created.id, "renombrada", "[{\"savedRequestId\":1,\"extractions\":[]}]").unwrap();
+        assert_eq!(updated.name, "renombrada");
+        assert!(updated.steps_json.contains("savedRequestId"));
+
+        delete_sequence(&conn, created.id).unwrap();
+        assert!(list_sequences(&conn, svc.id).unwrap().is_empty());
     }
 }

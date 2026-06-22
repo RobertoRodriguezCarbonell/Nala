@@ -217,6 +217,27 @@ pub struct SavedRequestInput {
     pub expected_status: String,
 }
 
+/// Secuencia: lista ordenada de pasos (en `steps_json`, blob opaco) que encadena
+/// peticiones guardadas extrayendo datos de cada respuesta.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Sequence {
+    pub id: i64,
+    pub service_id: i64,
+    pub name: String,
+    pub steps_json: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SequenceInput {
+    pub service_id: i64,
+    pub name: String,
+    pub steps_json: String,
+}
+
 /// Entrada de historial lista para insertar (sin id/created_at). Las cabeceras
 /// van serializadas a JSON; la auth ya viene redactada.
 pub struct NewHistoryEntry {

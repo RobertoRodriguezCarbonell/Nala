@@ -7,8 +7,8 @@ use tauri_plugin_dialog::DialogExt;
 use crate::error::AppError;
 use crate::models::{
     AuthStatus, Environment, EnvironmentInput, Header, HistoryEntry, HttpRequestInput, HttpResponse,
-    ImportResult, SavedRequest, SavedRequestInput, Service, ServiceInput, SnapshotMeta, Variable,
-    VariableInput,
+    ImportResult, SavedRequest, SavedRequestInput, Sequence, SequenceInput, Service, ServiceInput,
+    SnapshotMeta, Variable, VariableInput,
 };
 use crate::openapi::{self, NormalizedSpec};
 use crate::AppState;
@@ -683,4 +683,35 @@ pub fn delete_saved_request(state: State<AppState>, id: i64) -> Result<(), AppEr
 #[tauri::command]
 pub async fn discover_localhost() -> Vec<crate::discover::Discovered> {
     crate::discover::discover().await
+}
+
+// ---------- Secuencias ----------
+
+#[tauri::command]
+pub fn create_sequence(state: State<AppState>, input: SequenceInput) -> Result<Sequence, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::create_sequence(&conn, &input)
+}
+
+#[tauri::command]
+pub fn list_sequences(state: State<AppState>, service_id: i64) -> Result<Vec<Sequence>, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::list_sequences(&conn, service_id)
+}
+
+#[tauri::command]
+pub fn update_sequence(
+    state: State<AppState>,
+    id: i64,
+    name: String,
+    steps_json: String,
+) -> Result<Sequence, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::update_sequence(&conn, id, &name, &steps_json)
+}
+
+#[tauri::command]
+pub fn delete_sequence(state: State<AppState>, id: i64) -> Result<(), AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::delete_sequence(&conn, id)
 }
