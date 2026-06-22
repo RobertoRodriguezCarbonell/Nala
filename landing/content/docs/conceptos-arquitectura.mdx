@@ -1,0 +1,65 @@
+---
+title: Arquitectura
+description: Motor en Rust, local-first, SQLite y cifrado de secretos.
+---
+
+# Arquitectura
+
+Nala es una aplicación [Tauri](https://tauri.app/) que combina un frontend React/TypeScript con un backend en Rust. La mayor parte de la lógica —peticiones HTTP, parseo de OpenAPI, persistencia, cifrado— vive en Rust. El frontend se limita a renderizar la UI y a presentar al usuario modelos ya digeridos.
+
+Esta separación tiene consecuencias concretas en cómo funciona la app, especialmente en lo que respecta a seguridad, rendimiento y fiabilidad con APIs locales.
+
+## Peticiones HTTP desde Rust
+
+Todas las peticiones HTTP a tus APIs se hacen desde Rust usando `reqwest`, no desde el webview del navegador. Esto tiene tres ventajas directas:
+
+**Sin CORS.** El webview sujeta las restricciones de CORS del navegador. Un `fetch()` desde el frontend contra `http://localhost:8000` fallaría si esa API no incluye los headers `Access-Control-Allow-Origin` correctos —y la mayoría de APIs de desarrollo no los tienen. Rust hace la petición como cualquier proceso nativo: sin CORS.
+
+**Control de timeouts.** El timeout por defecto de las peticiones en Nala es de **60 segundos**. Al estar en Rust, este valor se aplica de forma fiable y consistente, sin depender de los distintos comportamientos de timeout del navegador.
+
+**Secretos sin exponer.** Los tokens y API keys se inyectan directamente en la petición en Rust, sin pasar por el webview en claro. El frontend nunca ve el valor real de un secreto; solo recibe el resultado de la petición.
+
+## Motor OpenAPI en Rust
+
+Nala incluye un motor de OpenAPI propio escrito en Rust. Cuando importas un servicio o pulsas Refrescar, este motor se encarga de todo el proceso:
+
+1. **Fetch** — descarga el `openapi.json` desde la URL base del entorno activo.
+2. **Parse** — deserializa el JSON.
+3. **Resolución de `$ref`** — desreferencia todos los `$ref` internos del spec, incluyendo los anidados.
+4. **Normalización 3.0/3.1** — FastAPI moderno emite OpenAPI 3.1, que tiene diferencias significativas respecto a 3.0 (tipos nullables, `oneOf` en lugar de `nullable`, etc.). El motor normaliza ambas versiones a un modelo interno unificado.
+5. **Snapshot** — guarda el JSON raw y los metadatos extraídos en SQLite.
+6. **Modelo digerido** — emite la estructura que el frontend recibe: una lista plana de operaciones con sus parámetros, tipos y validaciones ya resueltos.
+
+El frontend solo recorre esa estructura para pintar el formulario de la petición. El renderer de React no parsea OpenAPI ni resuelve `$ref`; simplemente mapea tipos ya conocidos (`string`, `integer`, `boolean`, `array`, `object`, enum, etc.) a los inputs correspondientes.
+
+El mismo motor implementa el **diff de esquemas** (comparación de dos snapshots) y la **generación de tipos TypeScript** (recorre los schemas del spec y emite interfaces y funciones de fetch). No hay dependencias de Node ni de `openapi-typescript`.
+
+## Persistencia
+
+Nala usa **SQLite** como única base de datos, en modo WAL (*Write-Ahead Logging*) para lecturas concurrentes sin bloqueos.
+
+La base de datos se crea al primer arranque en:
+
+```
+%AppData%\Roaming\Nala\data.db
+```
+
+La mayoría de los datos se guardan **en claro**: servicios, entornos (sin el secreto de auth), snapshots de esquema, variables no secretas, peticiones guardadas, secuencias e historial. Son datos que no son sensibles y que puedes necesitar consultar o exportar.
+
+El **cifrado a nivel de campo** (AES-256-GCM) se aplica únicamente a los datos sensibles:
+- Secretos de autenticación de entornos (tokens Bearer, API keys, contraseñas).
+- Variables marcadas como secreto.
+
+Cada campo cifrado se cifra de forma independiente con un nonce aleatorio. Esto significa que dos entornos con el mismo token generan ciphertexts distintos, lo que dificulta correlación.
+
+## Clave de cifrado
+
+La clave de cifrado es un array de 32 bytes aleatorios generado en el **primer arranque** mediante el CSPRNG del sistema operativo. Nunca toca disco en claro: se guarda inmediatamente en el **Windows Credential Manager** usando la crate `keyring`, bajo la entrada `Nala`.
+
+Cada vez que Nala arranca, recupera la clave del Credential Manager para descifrar los campos sensibles durante la sesión. Si la entrada del Credential Manager se elimina manualmente, los secretos cifrados en la base de datos dejan de ser legibles (la base de datos no se corrompe, pero los campos cifrados muestran un error de descifrado).
+
+La clave no se exporta, no se sincroniza y no está accesible desde el frontend.
+
+<Callout type="info">
+Para más detalle sobre qué datos se guardan, cómo se cifran y qué ocurre si cambias de máquina, consulta [Seguridad y datos](/docs/referencia-seguridad-datos).
+</Callout>

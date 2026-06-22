@@ -1,0 +1,90 @@
+---
+title: Smoke tests
+description: Marca peticiones como smoke y ejecútalas en lote por status.
+---
+
+# Smoke tests
+
+Un smoke test en Nala es una comprobación rápida de que un servicio responde correctamente a un conjunto de peticiones clave. En lugar de ejecutar las peticiones una a una manualmente, marcas algunas como smoke, pulsas **Run smoke** y Nala las lanza en lote contra el entorno activo, mostrando un resumen verde/rojo por petición.
+
+La comprobación es deliberadamente minimalista: solo el **código de status HTTP**. Sin asserts de body, sin scripting, sin lógica condicional. El objetivo es confirmar en segundos que el servicio está vivo y que sus endpoints principales responden dentro de la familia de status esperada.
+
+## Marcar una petición como smoke
+
+Al guardar cualquier petición desde el constructor, el diálogo de guardado muestra tres campos:
+
+- **Nombre** — el identificador de la petición guardada (aparecerá en la lista de smokes).
+- **Marcar como smoke** — checkbox activado por defecto. Desmárcalo solo si quieres guardar la petición sin incluirla en el conjunto de smokes del servicio.
+- **Status esperado** — el criterio de éxito. Por defecto `2xx`. Las opciones disponibles son:
+
+  | Opción | Significado |
+  |---|---|
+  | `2xx` | Cualquier status de éxito (200–299). Valor por defecto. |
+  | `200` | OK exacto. |
+  | `201` | Created exacto. |
+  | `202` | Accepted exacto. |
+  | `204` | No Content exacto. |
+  | `3xx` | Cualquier redirección (300–399). |
+  | `4xx` | Cualquier error de cliente (400–499). Útil para peticiones que deben rechazarse. |
+  | `5xx` | Cualquier error de servidor (500–599). Raramente el criterio deseado; disponible para pruebas de resiliencia. |
+
+<Callout type="tip">
+Usa `4xx` para peticiones que deben fallar por diseño: un endpoint de validación al que envías datos inválidos, un endpoint protegido al que llamas sin token, etc. El smoke no prueba que la API funciona bien, prueba que responde como esperas.
+</Callout>
+
+Puedes cambiar el status esperado de una petición smoke existente reabriendo la petición en el constructor, ajustando el valor y guardándola de nuevo.
+
+## La pestaña Smoke tests
+
+Abre la pestaña **Smoke tests** en la barra de pestañas del servicio activo. La pestaña muestra:
+
+- El contador **{n} smoke** con el número de peticiones marcadas como smoke en el servicio.
+- El botón **Run smoke**, que lanza la ejecución en lote.
+- La lista de peticiones smoke con su último resultado (si ya se ha ejecutado alguna vez).
+
+### Requisitos previos para ejecutar
+
+El botón **Run smoke** está deshabilitado en dos situaciones:
+
+- **No hay peticiones marcadas como smoke** en el servicio. Añade al menos una petición smoke primero.
+- **El smoke ya está en ejecución**. El botón se reactiva cuando termina la ejecución actual.
+
+Si el servicio no tiene un entorno activo seleccionado, Nala muestra el aviso:
+
+> **Selecciona un entorno activo para ejecutar el smoke.**
+
+Selecciona un entorno desde el selector de entorno en la barra superior antes de lanzar el smoke.
+
+## Ejecutar el smoke
+
+<Steps>
+<Step title="Selecciona el entorno activo">
+Asegúrate de que el selector de entorno en la barra superior muestra el entorno contra el que quieres probar. El smoke se ejecuta exactamente contra ese entorno: usa su base URL, sus variables y su autenticación configurada.
+</Step>
+
+<Step title="Pulsa Run smoke">
+Haz clic en **Run smoke**. Nala lanza las peticiones smoke del servicio en secuencia. Durante la ejecución, el botón queda deshabilitado y cada fila de la lista muestra un indicador de progreso mientras espera su resultado.
+</Step>
+
+<Step title="Revisa los resultados">
+Cuando termina la ejecución, la pestaña muestra el resumen:
+
+- **{n} verdes** — peticiones cuyo status real coincidió con el status esperado.
+- **{n} rojas** — peticiones cuyo status real no coincidió.
+
+Cada fila de la lista muestra su resultado individual:
+- **Verde** — el status coincidió con el criterio.
+- **Rojo** — el status no coincidió; la fila muestra el status real recibido para que veas qué devolvió la API.
+- **ERR** — error de red: la petición no llegó a recibir respuesta HTTP (timeout, conexión rechazada, host no alcanzable).
+</Step>
+</Steps>
+
+## Cómo afecta al historial
+
+Las ejecuciones de smoke no se registran en el historial (`skipHistory`). Esto mantiene el historial limpio con solo las peticiones que lanzas manualmente desde el constructor, sin que las ejecuciones automáticas de smoke lo contaminen con docenas de entradas repetidas.
+
+Si necesitas ver el detalle de una petición smoke fallida —headers enviados, body, respuesta completa— lanza esa petición manualmente desde el constructor con la misma configuración. Esa ejecución sí quedará registrada en el historial.
+
+<Callout type="info">
+Los smoke tests son una red de seguridad rápida, no un reemplazo de los tests de integración. Son útiles para confirmar que el servicio está vivo y que los endpoints principales responden como esperan antes de una sesión de desarrollo o un despliegue. Para una comprobación de comportamiento más exhaustiva, usa las peticiones guardadas manualmente.
+</Callout>

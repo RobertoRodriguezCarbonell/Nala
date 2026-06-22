@@ -1,0 +1,105 @@
+---
+title: Construir y enviar peticiones
+description: Formularios desde el esquema, params, body, headers y validación.
+---
+
+# Construir y enviar peticiones
+
+El constructor de peticiones es el centro de Nala. Cuando haces clic en un endpoint de la sidebar, el panel central muestra un formulario generado directamente desde el esquema OpenAPI del servicio: parámetros de ruta y query, body con sus tipos, headers personalizados y configuración de auth. No hay que escribir JSON a mano para los casos habituales; el formulario lo hace por ti.
+
+## La barra de URL
+
+En la parte superior del constructor hay una fila con tres elementos:
+
+- **Badge de método** — un indicador coloreado del método HTTP de la operación (<MethodBadge method="GET" />, <MethodBadge method="POST" />, <MethodBadge method="PUT" />, <MethodBadge method="PATCH" />, <MethodBadge method="DELETE" />). Es de solo lectura; viene del esquema.
+- **URL en vivo** — muestra la URL completa con las interpolaciones resueltas en tiempo real: `{{baseUrl}}/ruta/{param}?query=valor`. A medida que rellenas los campos del formulario, la URL se actualiza. Esto te permite verificar exactamente qué se va a enviar antes de pulsar **Enviar**.
+- **Botones Guardar / Enviar** — **Guardar** persiste el estado actual del constructor como petición guardada; **Enviar** lanza la petición contra el entorno activo.
+
+## Pestañas del constructor
+
+El constructor tiene cuatro pestañas. Los badges de las pestañas **Params** y **Headers** muestran cuántos campos activos hay en cada una, para que de un vistazo sepas si hay algo configurado.
+
+### Params
+
+La pestaña **Params** está dividida en dos secciones:
+
+**PATH** — Los parámetros de ruta de la operación. Cada param de ruta aparece como un campo `{name}` de solo texto. Los parámetros marcados como `required` en el esquema llevan un `*` rojo junto al nombre. El constructor no dejará enviar la petición si un path param requerido está vacío.
+
+**QUERY** — Los parámetros de query string. Aparecen como filas de nombre/valor con un checkbox de activar por fila. Las filas desactivadas no se incluyen en la petición aunque tengan valor escrito. Puedes añadir query params personalizados que no estén en el esquema usando la fila de adición manual.
+
+### Body
+
+La pestaña **Body** se muestra cuando la operación tiene un request body definido en el esquema. En la cabecera de la pestaña aparece el Content-Type de la operación (normalmente `application/json`) y, si el esquema lo define, el nombre del modelo de datos esperado.
+
+El formulario de body se genera a partir del esquema de la operación y tiene dos modos:
+
+- **Form** — el modo por defecto: cada campo del schema aparece como un input tipado. Cambia automáticamente al modo JSON crudo para schemas raros o muy anidados que no tienen una representación de formulario adecuada.
+- **JSON crudo** — un editor de texto libre donde puedes escribir el body como JSON directamente. Útil cuando el esquema es complejo, cuando quieres pegar un payload existente o cuando el formulario no captura bien tu caso de uso.
+
+El toggle **Form / JSON crudo** está siempre visible en la esquina de la pestaña, de modo que puedes cambiar de modo en cualquier momento.
+
+### Headers
+
+La pestaña **Headers** funciona de forma similar a QUERY: filas de nombre/valor con checkbox de activar por fila. Nala ya incluye automáticamente los headers de autenticación (según la estrategia configurada en Auth) y el `Content-Type` del body; aquí puedes añadir headers adicionales para esa petición concreta.
+
+El badge de la pestaña indica cuántos headers personalizados activos hay.
+
+### Auth
+
+La pestaña **Auth** muestra el resumen de la estrategia de autenticación configurada para el servicio y permite autenticarte o gestionar el token del entorno activo. Se documenta en detalle en [Autenticación](/docs/guias-autenticacion).
+
+## Mapeo de tipos a inputs
+
+Cuando el motor Rust resuelve el esquema de una operación, cada campo del body o de los params se mapea a un tipo de input en el formulario:
+
+| Tipo en el esquema | Input en el formulario |
+|---|---|
+| `enum` | Select con las opciones del enum; placeholder `—` cuando no hay ninguna seleccionada |
+| `boolean` | Toggle on/off |
+| `integer` \| `number` | Input numérico; respeta `minimum` y `maximum` del schema; muestra el `example` como placeholder |
+| `string` (sin format especial) | Campo de texto |
+| `string` con `format: password` | Campo de contraseña (texto oculto) |
+| `array` | Lista repetible: botón **+** para añadir un ítem, **×** para eliminar cada uno |
+| `object` | Grupo de campos anidados con borde; se expande recursivamente |
+| `$ref` | El schema referenciado se resuelve y se renderiza como un objeto anidado |
+
+Los campos marcados como `required` en el schema tienen el nombre en negrita y un asterisco rojo. Nala valida que estén rellenos y que el tipo del valor sea compatible antes de enviar.
+
+## Validación antes de enviar
+
+Antes de lanzar la petición, Nala valida el formulario:
+
+- **Campos required vacíos** — se marcan en rojo con un mensaje de error debajo del campo. La petición no se envía hasta que se rellenen.
+- **Tipo incorrecto** — si introduces un valor que no es compatible con el tipo del campo (por ejemplo, texto en un campo `integer`), el campo se marca en rojo.
+
+Si la validación falla, el botón **Enviar** no hace nada hasta que los errores se corrijan. Los errores aparecen en rojo directamente junto a cada campo problemático.
+
+<Callout type="info">
+Para peticiones con schemas muy complejos —cuerpos con propiedades muy anidadas, `oneOf`/`anyOf`/`allOf` sin un schema claro— el formulario cambia automáticamente al modo **JSON crudo**. Puedes forzar este modo en cualquier momento con el toggle Form / JSON crudo.
+</Callout>
+
+## Guardar una petición
+
+Al pulsar **Guardar**, el estado actual del constructor —endpoint, valores de Params, Body y Headers— se persiste como una **petición guardada**. Las peticiones guardadas aparecen en la sidebar bajo el endpoint correspondiente y se pueden marcar como smoke tests. Consulta [Smoke tests](/docs/guias-smoke-tests) para más detalle.
+
+<Steps>
+<Step title="Selecciona un endpoint">
+Haz clic en cualquier endpoint de la sidebar. El panel central carga el constructor con los params, body y headers del endpoint pre-rellenados con los valores del schema (ejemplos, valores por defecto).
+</Step>
+
+<Step title="Rellena los campos">
+En la pestaña **Params**, introduce los valores de los path params (los marcados con `*` son obligatorios) y activa los query params que necesites.
+
+Si el endpoint tiene body, abre la pestaña **Body** y rellena los campos del formulario, o cambia a JSON crudo si prefieres editar directamente.
+
+Añade headers adicionales en la pestaña **Headers** si el endpoint los necesita más allá de los de autenticación.
+</Step>
+
+<Step title="Verifica la URL en vivo">
+Comprueba que la URL completa en la barra superior refleja lo que esperas. Verás algo como `https://api.calclon.com/api/v2/orders/42?include_items=true`. Si algo no encaja, vuelve a los params y corrígelo.
+</Step>
+
+<Step title="Pulsa Enviar">
+Haz clic en **Enviar**. Nala valida el formulario; si todo está bien, lanza la petición desde Rust y abre el panel derecho con la respuesta. Si hay errores de validación, los campos problemáticos se marcan en rojo.
+</Step>
+</Steps>

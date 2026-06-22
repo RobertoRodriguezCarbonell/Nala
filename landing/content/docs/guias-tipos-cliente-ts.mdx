@@ -1,0 +1,138 @@
+---
+title: Tipos y cliente TypeScript
+description: Genera interfaces y un cliente fetch tipado, sin dependencias de Node.
+---
+
+# Tipos y cliente TypeScript
+
+A partir del esquema OpenAPI de un servicio, Nala puede generar código TypeScript listo para usar en tu proyecto: las **interfaces** de los modelos del esquema y un **cliente fetch tipado** con una función por operación. Todo el proceso ocurre en Rust, sin herramientas de Node externas ni pasos de compilación adicionales.
+
+## La pestaña Tipos TS
+
+Abre la pestaña **Tipos TS** en la barra de pestañas del servicio activo. El contenido se genera a partir del snapshot vigente del servicio (el más reciente importado o refrescado).
+
+La barra de herramientas de la pestaña tiene tres controles:
+
+- **Toggle Tipos / Cliente** — alterna entre los dos modos de salida. **Tipos** genera solo las interfaces de los modelos; **Cliente** genera el cliente fetch tipado completo.
+- **{n} líneas** — indicador de cuántas líneas tiene la salida actual. Actualiza automáticamente al cambiar el toggle.
+- **Copiar** — copia el contenido completo al portapapeles; muestra **"Copiado ✓"** brevemente y vuelve al estado normal.
+- **Guardar…** — abre un diálogo nativo del sistema operativo para guardar el archivo. El nombre de archivo por defecto es `tipos.ts` en modo Tipos y `cliente.ts` en modo Cliente.
+
+<Callout type="info">
+El diálogo **Guardar…** es el diálogo nativo de Windows, gestionado enteramente desde Rust. Nala no escribe el archivo en ninguna ruta fija: eres tú quien elige la carpeta de destino en el diálogo, exactamente igual que al guardar un archivo desde cualquier aplicación de escritorio.
+</Callout>
+
+## Modo Tipos: interfaces de los modelos
+
+El modo **Tipos** recorre todos los componentes del esquema (`components/schemas`) y genera una `interface` TypeScript por cada modelo. Los tipos se resuelven de forma recursiva: los campos que referencian otro modelo con `$ref` generan una referencia a la interfaz correspondiente, no un tipo en línea.
+
+A modo ilustrativo, así se vería la salida para un esquema con un modelo `Product` y un modelo `Category` (el código real depende de los modelos de tu esquema):
+
+```ts
+export interface Category {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  category: Category;
+  tags?: string[];
+  available: boolean;
+}
+
+export interface ProductCreate {
+  name: string;
+  price: number;
+  category_id: number;
+  tags?: string[];
+}
+
+export interface PaginatedProducts {
+  items: Product[];
+  total: number;
+  page: number;
+  size: number;
+}
+```
+
+Los campos marcados como `required` en el esquema aparecen sin `?`; los opcionales llevan el sufijo `?`. Los tipos OpenAPI se mapean a tipos TypeScript (`string` → `string`, `integer`/`number` → `number`, `boolean` → `boolean`, `array` → `T[]`, `object` inline → `Record<string, unknown>` o interfaz anónima según el caso).
+
+## Modo Cliente: funciones fetch tipadas
+
+El modo **Cliente** genera, además de las interfaces, un conjunto de funciones tipadas —una por operación del esquema— que envuelven `fetch` con los tipos correctos de entrada y salida. El cliente generado no tiene dependencias: solo usa la API estándar del navegador o de Node.
+
+A modo ilustrativo, así se vería la salida para las operaciones `GET /products` y `POST /products` (el código real depende de las operaciones de tu esquema):
+
+```ts
+export function createClient(baseUrl: string, token?: string) {
+  const headers = (): Record<string, string> => ({
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  });
+
+  return {
+    /** GET /products — List Products */
+    listProducts: async (params?: {
+      page?: number;
+      size?: number;
+      category_id?: number;
+    }): Promise<PaginatedProducts> => {
+      const query = params
+        ? "?" + new URLSearchParams(params as Record<string, string>).toString()
+        : "";
+      const res = await fetch(`${baseUrl}/products${query}`, {
+        method: "GET",
+        headers: headers(),
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json() as Promise<PaginatedProducts>;
+    },
+
+    /** POST /products — Create Product */
+    createProduct: async (body: ProductCreate): Promise<Product> => {
+      const res = await fetch(`${baseUrl}/products`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json() as Promise<Product>;
+    },
+  };
+}
+```
+
+Uso en tu proyecto:
+
+```ts
+import { createClient } from "./cliente";
+
+const api = createClient("http://localhost:8000", myToken);
+
+const products = await api.listProducts({ page: 1, size: 20 });
+const created = await api.createProduct({ name: "Widget", price: 9.99, category_id: 3 });
+```
+
+## Flujo de trabajo recomendado
+
+<Steps>
+<Step title="Refresca el esquema si la API ha cambiado">
+Si el backend ha evolucionado desde la última importación, pulsa **Refrescar** en la sidebar para obtener el snapshot más reciente. La pestaña Tipos TS genera siempre a partir del snapshot vigente; si no refrescas, los tipos corresponderán a la versión anterior.
+</Step>
+
+<Step title="Elige el modo de salida">
+Usa el toggle **Tipos / Cliente** para elegir qué quieres generar. Si solo necesitas los tipos para anotar tu código, el modo **Tipos** es suficiente y produce una salida más compacta. Si quieres un cliente listo para usar, elige **Cliente**.
+</Step>
+
+<Step title="Copia o guarda el archivo">
+Para un uso puntual (revisar un tipo concreto, pegar un fragmento), usa **Copiar**. Para incorporar el archivo a tu proyecto de forma estable, pulsa **Guardar…**, elige la carpeta de tu proyecto en el diálogo y guarda. Puedes repetir este paso cada vez que refresques el esquema para mantener los tipos sincronizados con la API.
+</Step>
+</Steps>
+
+<Callout type="tip">
+Si el esquema de la API cambia con frecuencia, convierte la regeneración de tipos en parte de tu flujo de refresco habitual: refresca el spec en Nala → revisa el diff en la pestaña **Diff de esquema** → regenera los tipos con **Guardar…**. Así tus tipos siempre reflejan el contrato actual de la API, con alertas visibles de qué ha cambiado antes de sobreescribir el archivo.
+</Callout>

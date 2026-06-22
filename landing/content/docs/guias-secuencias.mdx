@@ -1,0 +1,82 @@
+---
+title: Secuencias multi-paso
+description: Encadena peticiones extrayendo datos con JSONPath.
+---
+
+# Secuencias multi-paso
+
+Una secuencia es un conjunto ordenado de peticiones guardadas que se ejecutan en cadena: el resultado de cada paso puede extraerse con JSONPath y pasarse como variable a los pasos siguientes. El caso de uso más habitual es el flujo de login: el primer paso autentica y extrae el token de la respuesta; los pasos siguientes usan ese token como variable en sus headers.
+
+## La pestaña Secuencias
+
+Abre la pestaña **Secuencias** en la barra de pestañas del servicio activo. La pestaña muestra la lista de secuencias definidas para el servicio y el botón **+ Nueva secuencia** para crear una nueva.
+
+Cada secuencia de la lista tiene un nombre y, al seleccionarla, se abre el editor de la secuencia en el panel principal con los controles:
+
+- **Nombre** — el identificador de la secuencia. Editable en el campo de texto del editor.
+- **Guardar** — guarda los cambios del editor en la secuencia actual.
+- **Run** — ejecuta la secuencia contra el entorno activo.
+- **Borrar** — elimina la secuencia del servicio (acción irreversible, con confirmación).
+
+## Construir una secuencia
+
+<Steps>
+<Step title="Crea una nueva secuencia">
+Pulsa **+ Nueva secuencia** en la pestaña Secuencias. Se añade una secuencia sin nombre con un paso vacío. Escribe el nombre de la secuencia en el campo de texto del editor.
+</Step>
+
+<Step title="Añade y ordena los pasos">
+Cada paso muestra su número de orden y un selector de **petición guardada**. El selector lista las peticiones guardadas del servicio con el formato `{MÉTODO} {nombre}`, por ejemplo <MethodBadge method="POST" /> `login` o <MethodBadge method="GET" /> `listar productos`.
+
+Selecciona la petición guardada para cada paso. Usa los controles **↑** y **↓** para reordenar los pasos, y **✕** para eliminar un paso de la secuencia. Para añadir un paso nuevo, usa el botón de añadir paso al final de la lista.
+</Step>
+
+<Step title="Configura las extracciones de cada paso">
+Debajo del selector de petición de cada paso hay las **filas de extracción**. Cada fila define:
+
+- **Expresión JSONPath** — la ruta dentro del JSON de respuesta del paso, en notación de punto. Por ejemplo, `$.access_token` extrae el campo `access_token` del nivel raíz, o `$.data.token` extrae el campo `token` dentro del objeto `data`.
+- **Nombre de variable** — el nombre con el que el valor extraído estará disponible para los pasos siguientes. Por ejemplo, `token` hace que `{{token}}` sea interpolable en los pasos posteriores.
+
+Usa el botón **+ extracción** dentro del paso para añadir más filas de extracción si necesitas extraer varios valores de la misma respuesta.
+</Step>
+
+<Step title="Guarda la secuencia">
+Pulsa **Guardar** para persistir la configuración. Los cambios no se guardan automáticamente mientras editas.
+</Step>
+</Steps>
+
+## Ejecutar una secuencia
+
+Con la secuencia configurada, selecciona el entorno activo en la barra superior y pulsa **Run** en el editor.
+
+Nala ejecuta los pasos en orden:
+
+1. Lanza el paso 1 contra el entorno activo.
+2. Si el paso tiene extracciones configuradas, aplica las expresiones JSONPath sobre el JSON de respuesta y almacena los valores en un mapa de variables temporal (privado de esta ejecución).
+3. Lanza el paso 2, con las variables extraídas en el paso 1 disponibles para interpolación en la URL, los headers y el body de la petición guardada del paso 2.
+4. Continúa hasta el último paso o hasta que uno falle.
+
+**Para en el primer fallo.** Si un paso devuelve un status que indica error (4xx, 5xx) o produce un error de red, la ejecución se detiene ahí y los pasos siguientes no se ejecutan. El resultado de la secuencia muestra hasta qué paso llegó antes de parar.
+
+### Resultados por paso
+
+Tras la ejecución, el editor muestra el resultado de cada paso:
+
+- **Status coloreado** (verde para 2xx, rojo para 4xx/5xx) o **ERR** si fue un error de red.
+- **Las variables extraídas** del paso, en el formato `{var} = {valor}`. Esto te permite verificar que el JSONPath encontró el campo correcto y que el valor tiene el formato esperado.
+
+<Callout type="tip">
+El caso de uso más directo para las secuencias es encadenar un login con la petición que quieres probar: el paso 1 es el endpoint de login (extrae `$.access_token` → `token`), el paso 2 es la petición protegida con `Authorization: Bearer {{token}}` en sus headers. Así puedes probar un flujo autenticado completo sin depender de la gestión de tokens del panel Auth.
+</Callout>
+
+## Variables extraídas y alcance
+
+Las variables extraídas durante una ejecución de secuencia son **temporales**: existen solo durante esa ejecución y no se guardan en el mapa de variables globales ni del servicio. Cada ejecución comienza con el mapa de variables vacío y lo va rellenando paso a paso.
+
+Si el JSONPath de una extracción no encuentra el campo en la respuesta (porque la respuesta no es JSON, el campo no existe o tiene otro nombre), el valor de esa variable queda sin definir para los pasos siguientes. Si un paso posterior necesita esa variable, la interpolación la dejará como el literal `{{nombre}}` sin resolver, lo que probablemente causará un fallo visible en ese paso.
+
+La notación JSONPath soportada es la notación de punto: `$.campo`, `$.objeto.campo`, `$.array[0].campo`. No se soporta filtrado (`[?(...)]`) ni recursión profunda (`..`).
+
+<Callout type="info">
+Las secuencias complementan, no reemplazan, la gestión de autenticación del panel Auth. Si tu API usa un flujo de login estándar (usuario/contraseña → Bearer token), usa la estrategia **Login** del panel Auth, que gestiona el ciclo de vida del token automáticamente. Las secuencias son útiles para flujos más específicos: probar encadenamientos concretos, verificar que una creación seguida de una consulta devuelve los datos correctos, o explorar secuencias de pasos que no encajan en la abstracción de auth.
+</Callout>

@@ -1,0 +1,86 @@
+---
+title: Seguridad y datos
+description: Qué se guarda, dónde y qué se cifra.
+---
+
+# Seguridad y datos
+
+Nala es una herramienta local-first: todos tus datos —servicios, entornos, historial, credenciales— viven en tu máquina, sin ningún servicio en la nube intermedio. Esta página documenta exactamente qué se guarda, dónde se guarda y qué partes se cifran.
+
+## Ubicación de los datos
+
+La base de datos de Nala es un archivo SQLite en modo WAL (Write-Ahead Logging):
+
+```
+%AppData%\Roaming\Nala\data.db
+```
+
+En la mayoría de instalaciones de Windows esto equivale a una ruta del tipo `C:\Users\TuNombre\AppData\Roaming\Nala\data.db`. El directorio se crea automáticamente en el primer arranque.
+
+El modo WAL mejora el rendimiento en lecturas concurrentes y hace que la base de datos sea más resistente a cierres inesperados de la aplicación.
+
+## Qué se cifra y qué no
+
+Nala cifra únicamente los datos que, si quedaran expuestos, permitirían a alguien suplantar tu identidad o acceder a tus APIs. El resto se guarda en claro para que las consultas sean rápidas y la base de datos sea inspeccionable si alguna vez lo necesitas.
+
+| Dato | ¿Se cifra? | Notas |
+|---|---|---|
+| Secreto Bearer/API key (por entorno) | Sí — AES-256-GCM | El valor del token o la API key del entorno |
+| Token de login cacheado | Sí — AES-256-GCM | El token obtenido tras ejecutar el flujo de login |
+| Credenciales de login recordadas | Sí — AES-256-GCM | Solo si marcas «Recordar credenciales» en el entorno |
+| Metadatos de servicio | No | Nombre, grupo, color, ruta del spec |
+| Nombres y URLs de entorno | No | Nombre del entorno y base URL |
+| Variables (con o sin flag de secreto) | No | Todas las variables se guardan en texto claro; el flag de secreto solo redacta el valor en la UI como `••••` |
+| Snapshots de esquema | No | Copia del `openapi.json`; no contiene credenciales |
+| Borradores de peticiones guardadas | No | Params, body y headers de la petición |
+| Cabeceras de auth en historial | Redactadas | Se almacenan como `••••`, no cifradas sino eliminadas |
+| Resto del historial | No | URL, método, status, tiempo, body de request/response |
+
+<Callout type="warning">
+Marcar una variable como «Secreto» **solo oculta su valor en la lista** (muestra `••••`); el valor se sigue guardando en texto claro en la base de datos, sin cifrado. Si necesitas proteger un token o API key en reposo, utiliza el secreto de autenticación del entorno, que sí se cifra con AES-256-GCM. Consulta la guía [Autenticación](/docs/guias-autenticacion) para más detalles.
+</Callout>
+
+<Callout type="warning">
+Las cabeceras de autenticación del historial (`Authorization`, `X-API-Key` y equivalentes) **no se guardan en claro ni cifradas**: se reemplazan permanentemente por `••••` antes de escribirlas en disco. Esta redacción es irreversible. El valor real del token siempre está disponible en el panel **Auth** del constructor, nunca en el historial.
+</Callout>
+
+## Algoritmo de cifrado
+
+Nala usa **AES-256-GCM** para el cifrado de secretos. El formato de los valores cifrados almacenados en la base de datos es:
+
+```
+base64(nonce[12 bytes] || ciphertext || tag)
+```
+
+- **Nonce**: 12 bytes aleatorios generados de forma independiente para cada operación de cifrado. No se reutiliza nunca el mismo nonce para el mismo dato.
+- **Ciphertext**: el texto cifrado del secreto.
+- **Tag**: el tag de autenticación GCM de 16 bytes, que garantiza que el dato no ha sido modificado.
+
+Todo el bloque se codifica en Base64 estándar y se guarda como texto en la columna correspondiente de SQLite.
+
+## La clave de cifrado
+
+La clave maestra con la que se cifran y descifran todos los secretos es un bloque de **32 bytes aleatorios** (256 bits). Se genera una sola vez, en el primer arranque de Nala, y se guarda en el **Windows Credential Manager** usando la librería `keyring`.
+
+La clave nunca toca disco en claro: vive exclusivamente en el almacén de credenciales del sistema operativo. Cuando Nala necesita cifrar o descifrar un secreto, solicita la clave al Credential Manager en memoria, realiza la operación y descarta la clave. De esta forma, incluso si alguien obtiene acceso directo al archivo `data.db`, no puede descifrar los secretos sin la clave del Credential Manager.
+
+<Callout type="warning">
+Si la entrada de la clave de cifrado en Windows Credential Manager se elimina manualmente, se corrompe o se pierde al migrar el perfil de usuario a otra máquina, **los secretos cifrados de Nala no podrán descifrarse**. Los datos no cifrados (servicios, entornos, historial…) seguirán siendo accesibles, pero tokens, API keys y credenciales recordadas quedarán irrecuperables. En ese caso, tendrás que volver a introducir los secretos en cada entorno.
+</Callout>
+
+## Peticiones HTTP
+
+Las peticiones a tus APIs se realizan **desde el proceso Rust de Nala**, no desde el webview. Esto tiene dos implicaciones de seguridad importantes:
+
+1. **Sin CORS**: Las peticiones van directamente al servidor sin pasar por el navegador, por lo que no hay restricciones CORS aunque la API no tenga los headers `Access-Control-Allow-Origin` configurados. Ideal para APIs locales o de preview.
+2. **Secretos fuera del webview**: Los valores de tokens y API keys se inyectan en la petición en el proceso Rust. El webview —el componente que ejecuta el código React— nunca recibe el valor real de los secretos; solo recibe la respuesta del servidor.
+
+## Resumen del modelo de seguridad
+
+- **Datos en reposo**: SQLite local; solo los secretos de auth cifrados con AES-256-GCM (tokens, API keys y credenciales recordadas). Las variables —incluyendo las marcadas como secreto— se guardan en texto claro.
+- **Clave de cifrado**: 32 bytes en Windows Credential Manager, nunca en disco.
+- **Datos en tránsito**: Las peticiones se hacen desde Rust con `reqwest`; los secretos no pasan por el webview.
+- **Historial**: Cabeceras de auth siempre redactadas, sin posibilidad de recuperarlas.
+- **Sin telemetría ni sincronización cloud**: Nala no envía ningún dato fuera de tu máquina.
+
+Para ver cómo se gestionan los tokens y credenciales en el flujo de autenticación, consulta la guía [Autenticación](/docs/guias-autenticacion). Para entender qué datos se registran en cada ejecución, consulta [Historial](/docs/guias-historial).

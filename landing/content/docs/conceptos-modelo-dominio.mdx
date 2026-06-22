@@ -1,0 +1,97 @@
+---
+title: Modelo de dominio
+description: Servicios, entornos, credenciales, snapshots, peticiones, secuencias, variables e historial.
+---
+
+# Modelo de dominio
+
+Nala organiza todo lo que necesitas para trabajar con tus APIs alrededor de un conjunto de entidades bien definidas. Entender cómo encajan entre sí te ayudará a sacar partido de la herramienta y a entender por qué algunas cosas funcionan como funcionan (por ejemplo, por qué la URL no vive en el servicio sino en el entorno).
+
+## Servicio
+
+El **Servicio** es la identidad lógica de una API. Representa "tu API de facturación" o "tu API de usuarios", con independencia de si la estás probando en local o en producción.
+
+Un servicio guarda:
+- **Nombre** — etiqueta visible en la sidebar (p. ej. `Calclon API`).
+- **Grupo / proyecto** — agrupación opcional para organizar la sidebar cuando tienes muchos servicios.
+- **Color e icono** — personalización visual.
+- **Ruta del spec** — la ruta relativa desde la que importar el OpenAPI (por defecto `/openapi.json`).
+
+Lo que el servicio **no guarda** es la URL base. La URL vive en el entorno, porque la misma API tiene URLs distintas según el destino (local, preview, prod). Separar identidad de destino evita duplicar configuración y hace que cambiar de entorno sea cuestión de un selector, no de editar la petición.
+
+## Entorno
+
+El **Entorno** es el destino concreto al que apuntar cuando pruebas un servicio. Cada servicio tiene al menos un entorno; lo habitual es tener tres: `local`, `preview` y `prod`.
+
+Un entorno guarda:
+- **Nombre** — etiqueta del entorno (`local`, `staging`, `prod`…).
+- **Base URL** — la URL raíz de la API en este destino (p. ej. `http://localhost:8000`). De ella se computa `{{baseUrl}}` para interpolar en las peticiones.
+- **Secreto de auth** — el dato concreto de autenticación para este entorno (el token Bearer pegado, la API key o las credenciales del flujo de login), guardado cifrado.
+
+El entorno activo en cada momento determina contra qué URL se lanzan las peticiones y qué credenciales se inyectan.
+
+## Credencial / estrategia de auth
+
+La autenticación en Nala está partida en dos capas distintas:
+
+- El **Servicio** define la *estrategia* de autenticación una sola vez: ninguna, Bearer estático, API key (en header o query string) o un flujo de login (`POST` a un endpoint, extraer el token de la respuesta). Esta estrategia es la misma para todos los entornos del servicio.
+- El **Entorno** aporta el *secreto o las credenciales* concretas: el valor del token, el valor de la API key, o el usuario y contraseña con los que hacer login en ese entorno específico.
+
+Los secretos se guardan cifrados con AES-256-GCM; la clave de cifrado vive en el Windows Credential Manager y nunca toca disco en claro. Consulta [Seguridad y datos](/docs/referencia-seguridad-datos) para el detalle completo.
+
+## Snapshot de esquema
+
+Cada vez que importas un servicio o pulsas **Refrescar**, Nala descarga el `openapi.json`, lo parsea y guarda una copia completa: eso es un **snapshot**. Un snapshot contiene:
+
+- El JSON raw del spec.
+- Metadatos extraídos: versión de OpenAPI (`3.0.x` o `3.1.x`), título de la API, versión de la API, número de endpoints detectados y fecha y hora de la captura (`fetched_at`).
+
+Los endpoints no se normalizan a tabla; se derivan del snapshot en memoria cada vez que los necesitas. Esto significa que el snapshot es la fuente de verdad y no hay riesgo de desincronización entre lo que tienes guardado y lo que el esquema dice.
+
+Los snapshots son la base del **diff**: puedes comparar cualquier par de snapshots de un servicio para ver qué cambió y si algún cambio es un breaking change. Cada importación y cada refresco crea un nuevo snapshot; los anteriores se conservan.
+
+## Petición guardada
+
+Una **petición guardada** es el estado completo de un constructor de peticiones: el endpoint elegido, los valores que has puesto en Params, Body, Headers y Auth. Permite guardar combinaciones que usas frecuentemente sin tener que rellenarlas cada vez.
+
+Las peticiones guardadas pueden marcarse como **smoke**: al ejecutar "Run smoke" sobre un servicio, Nala lanza todas sus peticiones smoke contra el entorno activo y comprueba que el status de respuesta coincide con el esperado (2xx por defecto, configurable por petición). El resultado se muestra como un resumen verde/rojo. Consulta [Smoke tests](/docs/guias-smoke-tests) para más detalle.
+
+## Secuencia
+
+Una **secuencia** es una lista ordenada de pasos donde cada paso referencia una petición guardada y puede extraer un dato de la respuesta (mediante JSONPath) para pasarlo al paso siguiente.
+
+El caso de uso prototípico es el flujo de login: el primer paso hace `POST /auth/login`, extrae el `access_token` de la respuesta, y los pasos siguientes lo usan como Bearer. Consulta [Secuencias multi-paso](/docs/guias-secuencias) para configurarlas.
+
+## Variable
+
+Las **variables** son pares clave/valor con ámbito y sirven para interpolar valores en URLs, headers y bodies usando la sintaxis `{{nombre}}`.
+
+Los ámbitos disponibles son:
+- **Global** — disponible en todos los servicios y entornos.
+- **Servicio** — disponible en todos los entornos de ese servicio.
+- **Entorno** — disponible solo en ese entorno concreto.
+
+Cuando Nala resuelve una plantilla como `{{token}}`, busca primero en el entorno activo, luego en el servicio, y finalmente en el ámbito global. Las variables pueden marcarse como **secreto**, lo que redacta su valor en la UI (se muestra `••••`); el valor se sigue guardando en texto claro en disco, sin cifrar.
+
+Consulta [Entornos y variables](/docs/guias-entornos-variables) para el CRUD completo de variables y la referencia de interpolación.
+
+## Entrada de historial
+
+Cada petición que envías genera una **entrada de historial** con:
+- Método, URL, headers y body de la petición enviada.
+- Status HTTP, tiempo de respuesta, tamaño y body de la respuesta.
+- Fecha y hora de ejecución.
+
+Los headers de autenticación (`Authorization`, etc.) se redactan automáticamente (`••••`) y nunca se guardan en claro, ni en la base de datos ni en los logs. Desde el historial puedes reenviar cualquier petición pasada sin tener que reconstruirla. Consulta [Historial](/docs/guias-historial).
+
+## Relaciones
+
+El modelo completo queda así:
+
+- Un **Servicio** tiene N **Entornos** y N **Snapshots**.
+- Cada **Entorno** tiene su propia configuración de auth (secreto o credenciales).
+- Las **Peticiones guardadas** y las **Secuencias** cuelgan de un Servicio.
+- Las **Variables** tienen ámbito global, de servicio o de entorno.
+- El **Historial** registra cada ejecución individual, sin importar si vino de una petición guardada, de una secuencia o de una ejecución ad-hoc desde el constructor.
+
+Esta estructura hace que añadir un nuevo entorno (por ejemplo `staging`) a un servicio existente sea tan sencillo como crear el entorno con su URL y sus credenciales: todas las peticiones guardadas, los smoke tests y las secuencias funcionan inmediatamente contra ese nuevo destino cambiando el selector de entorno activo.

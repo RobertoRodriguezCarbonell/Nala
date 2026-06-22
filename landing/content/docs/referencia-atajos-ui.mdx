@@ -1,0 +1,92 @@
+---
+title: Atajos y UI
+description: Layout de tres paneles, pestañas y atajos.
+---
+
+# Atajos y UI
+
+Esta página describe la estructura visual de Nala —cómo están organizados los tres paneles y qué contiene cada pestaña— y lista los atajos de teclado disponibles.
+
+## Layout de tres paneles
+
+Nala usa un layout de tres paneles dispuestos horizontalmente:
+
+| Panel | Posición | Contenido |
+|---|---|---|
+| **Sidebar** | Izquierda | Lista de servicios con sus endpoints desplegables |
+| **Constructor** | Centro | Constructor de peticiones con las pestañas de servicio y de operación |
+| **Respuesta** | Derecha | Visor de la respuesta de la última petición enviada |
+
+Los tres paneles son visibles simultáneamente. El ancho del panel de respuesta es ajustable arrastrando el separador: Nala recuerda el ancho entre sesiones.
+
+### La sidebar
+
+La sidebar lista todos los servicios dados de alta. Cada servicio es un elemento desplegable que, al expandirlo, muestra sus endpoints organizados por tag. Cada endpoint tiene un badge de método coloreado (<MethodBadge method="GET" />, <MethodBadge method="POST" />, <MethodBadge method="PUT" />, <MethodBadge method="PATCH" />, <MethodBadge method="DELETE" />) y su ruta.
+
+Al hacer clic en un endpoint, se carga en el constructor central. Con clic derecho sobre un servicio en la sidebar aparece un menú contextual con las acciones disponibles para ese servicio.
+
+### El constructor central
+
+La parte superior del constructor muestra la **barra de servicio activo**: el nombre del servicio y el selector de entorno. Debajo hay dos niveles de pestañas:
+
+1. **Pestañas de servicio** — vistas del servicio seleccionado.
+2. **Pestañas del constructor** — secciones de la petición en construcción (visibles cuando hay una operación cargada).
+
+### El panel de respuesta
+
+El panel de respuesta ocupa la parte derecha del layout. Muestra el resultado de la última petición enviada: status HTTP, tiempo, tamaño y el body con resaltado de sintaxis. El status se colorea por familia: verde para 2xx, cian para 3xx, ámbar para 4xx, rojo para 5xx.
+
+## Pestañas de servicio
+
+Cuando un servicio está activo, las siguientes pestañas aparecen en la barra superior del constructor:
+
+| Pestaña | Contenido |
+|---|---|
+| **Endpoints** | El árbol de endpoints del servicio, agrupados por tag. Haz clic en un endpoint para cargarlo en el constructor. |
+| **Diff de esquema** | Comparador de dos snapshots del mismo servicio. Muestra los cambios breaking y no-breaking entre versiones. |
+| **Tipos TS** | Generador de interfaces TypeScript desde el esquema OpenAPI del servicio. |
+| **Smoke** | Lista de peticiones marcadas como smoke test del servicio y botón «Run smoke» para ejecutarlas en lote. |
+| **Secuencias** | Secuencias multi-paso donde el resultado de un paso alimenta el siguiente. |
+| **Historial** | Registro de todas las peticiones lanzadas para este servicio, con detalle y opción de reenviar. |
+
+## Pestañas del constructor
+
+Cuando hay una operación cargada en el constructor, las siguientes pestañas aparecen en la sección de configuración de la petición:
+
+| Pestaña | Contenido |
+|---|---|
+| **Params** | Path params y query params como tabla con checkbox de activación por fila. |
+| **Body** | Formulario generado desde el esquema o editor JSON crudo (toggle en la esquina). |
+| **Headers** | Headers HTTP personalizados como tabla con checkbox de activación por fila. |
+| **Auth** | Estrategia de autenticación del servicio y secreto del entorno activo. |
+
+## Atajos de teclado
+
+| Tecla | Acción |
+|---|---|
+| <Kbd>Esc</Kbd> | Cierra el menú contextual o el panel activo que tenga el foco |
+| <Kbd>Enter</Kbd> | Confirma la creación de una variable en el gestor de variables / envía el formulario activo |
+
+<Callout type="info">
+<Kbd>⌘K</Kbd> / <Kbd>Ctrl K</Kbd> abre el buscador de **esta documentación**, no de la aplicación Nala. Es el atajo del sitio de docs para buscar páginas y secciones rápidamente.
+</Callout>
+
+## Barra superior
+
+La barra superior de Nala contiene:
+
+- **Nombre de la aplicación** — «Nala» con el logotipo.
+- **Selector de servicio activo** — cambia el servicio que se muestra en el constructor y la sidebar.
+- **Selector de entorno activo** — cambia el entorno del servicio seleccionado; afecta a la base URL y a los secretos que se usan en las peticiones.
+
+El selector de entorno está siempre visible y prominente para que no haya confusión sobre qué destino estás probando en cada momento.
+
+## Estados de la UI
+
+Nala tiene comportamientos específicos en estos estados:
+
+- **Sin servicios**: La pantalla de bienvenida muestra el botón de alta de servicio con una indicación breve de cómo empezar. Consulta [Inicio rápido](/docs/empezar-inicio-rapido).
+- **Cargando el spec**: Un indicador de progreso ocupa el lugar del árbol de endpoints mientras Nala descarga y parsea el `openapi.json`.
+- **Error de fetch**: Un mensaje de error ocupa el área del constructor con el detalle del problema y un botón de reintentar.
+- **401 en una petición**: Un banner aparece en el panel de respuesta con las opciones de reautenticación. Consulta [Autenticación](/docs/guias-autenticacion).
+- **Offline (spec cacheado)**: Puedes navegar los endpoints del spec aunque la API no responda. Las peticiones fallarán al intentar enviarlas, pero el árbol y los formularios siguen siendo accesibles.

@@ -1,0 +1,92 @@
+---
+title: Diff de esquemas
+description: Compara dos snapshots y detecta breaking changes.
+---
+
+# Diff de esquemas
+
+Cuando una API evoluciona —añade campos, elimina parámetros, cambia tipos— no siempre es obvio qué ha cambiado entre dos importaciones. El diff de esquemas de Nala compara cualquier par de snapshots del mismo servicio y clasifica cada cambio como breaking o no-breaking, para que sepas de un vistazo qué ajustes requieren atención antes de seguir usando el servicio.
+
+## Snapshots: la base del diff
+
+Cada vez que importas un servicio o pulsas **Refrescar** en la sidebar, Nala crea un **snapshot**: una copia completa del `openapi.json` en ese instante, con metadatos de versión, fecha y número de endpoints detectados. Los snapshots se acumulan; nunca se sobreescriben. Esto significa que si refrescas el esquema regularmente, siempre tendrás un historial de versiones con el que comparar.
+
+Consulta [Importar desde OpenAPI](/docs/guias-importar-openapi) para el detalle de cuándo se crean los snapshots y cómo se almacenan.
+
+## La pestaña Diff de esquema
+
+Abre la pestaña **Diff de esquema** en la barra de pestañas del servicio activo. La pestaña muestra dos selectores en la parte superior:
+
+- **De** — el snapshot de origen (la versión más antigua que sirve como referencia).
+- **A** — el snapshot de destino (la versión más reciente con los cambios).
+
+Cada opción en los selectores muestra el snapshot con el formato:
+
+```
+{versión} · {fecha} · {n} endpoints
+```
+
+Por ejemplo: `v1.3.0 · 2025-06-10 14:22 · 47 endpoints`. Si la API no declara versión en el spec, Nala usa el número de orden del snapshot.
+
+## Ejecutar el diff
+
+<Steps>
+<Step title="Selecciona los snapshots a comparar">
+En los selectores **De** y **A**, elige el par de snapshots que quieres comparar. Normalmente seleccionarás el snapshot inmediatamente anterior en **De** y el más reciente en **A**, pero puedes comparar cualquier par, incluso no consecutivos, para detectar la acumulación de cambios de varias versiones.
+</Step>
+
+<Step title="Revisa el resumen">
+En cuanto seleccionas los dos snapshots, el diff se calcula automáticamente. El resumen aparece justo debajo de los selectores con dos contadores:
+
+- **{n} breaking** — en rojo si hay alguno; en neutro si es cero.
+- **{n} no-breaking** — cambios que no rompen la compatibilidad con versiones anteriores.
+
+Si el resumen muestra `0 breaking · 0 no-breaking`, los dos snapshots son idénticos en cuanto a contrato: mismos endpoints, mismos parámetros, mismos tipos.
+</Step>
+
+<Step title="Examina los cambios por endpoint">
+Debajo del resumen, los cambios se agrupan por endpoint en secciones con el encabezado:
+
+```
+{MÉTODO} {ruta}
+```
+
+Dentro de cada sección, cada cambio aparece como una fila con:
+- Un **punto de color** rojo si es breaking, neutro si no lo es.
+- La **descripción del cambio** (qué campo, parámetro o propiedad cambió y cómo).
+- Un **badge "breaking"** en rojo junto a los cambios que rompen compatibilidad.
+
+Puedes expandir o contraer cada sección de endpoint para centrarte en lo que más te interesa.
+</Step>
+</Steps>
+
+## Qué se marca como breaking
+
+Nala clasifica un cambio como **breaking** cuando puede hacer que clientes existentes fallen sin modificación. Los cambios breaking son:
+
+| Cambio | Por qué es breaking |
+|---|---|
+| **Endpoint eliminado** | El cliente llama a una ruta que ya no existe. |
+| **Parámetro required eliminado** | El servidor esperaba ese parámetro; el cliente ya lo enviaba. |
+| **Campo de body required eliminado** | El servidor dejará de aceptar el body tal como el cliente lo construye. |
+| **Tipo de esquema cambiado (incompatible)** | El campo cambia de tipo (p. ej. `string` → `integer`), lo que rompe la serialización del cliente. |
+| **Status de respuesta eliminado** | El cliente manejaba ese status; ya no lo recibirá y puede quedar sin rama de código para tratarlo. |
+
+Los cambios **no-breaking** son adiciones: endpoints nuevos, parámetros opcionales nuevos, campos de body opcionales nuevos, tipos de respuesta extendidos. Ninguno de estos debería romper un cliente existente.
+
+<Callout type="warning">
+Un campo que deja de ser `required` (pasa a opcional) no se clasifica como breaking porque los clientes que lo enviaban seguirán funcionando. Sin embargo, puede ser un indicio de que la semántica del campo ha cambiado. Revísalo si el comportamiento del servidor depende de ese campo.
+</Callout>
+
+## Flujo recomendado con refrescos frecuentes
+
+Si trabajas activamente en el backend, el flujo más eficiente con el diff es:
+
+1. Antes de empezar una sesión de pruebas, pulsa **Refrescar** en el servicio para obtener el snapshot más reciente.
+2. Abre la pestaña **Diff de esquema** y compara el snapshot nuevo con el inmediatamente anterior.
+3. Si hay cambios breaking, actualiza las peticiones guardadas afectadas antes de lanzar un smoke test.
+4. Si los tipos TypeScript generados se usan en tu proyecto, vuelve a generarlos con el snapshot nuevo. Consulta [Tipos y cliente TypeScript](/docs/guias-tipos-cliente-ts).
+
+<Callout type="info">
+El diff es puramente local: compara los snapshots que ya tienes guardados en Nala. No hace ninguna petición de red. Puedes ejecutarlo aunque la API esté caída o sin conexión.
+</Callout>

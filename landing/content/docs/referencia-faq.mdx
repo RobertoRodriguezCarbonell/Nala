@@ -1,0 +1,104 @@
+---
+title: FAQ y solución de problemas
+description: Errores comunes y cómo resolverlos.
+---
+
+# FAQ y solución de problemas
+
+Respuestas a las preguntas más frecuentes y a los errores que suelen aparecer al empezar con Nala o al añadir un servicio nuevo.
+
+---
+
+### No se pudo importar el spec: ¿qué compruebo?
+
+Cuando Nala no puede importar el spec de un servicio, el error más habitual es uno de estos tres:
+
+1. **La API no está levantada.** Nala hace la petición al spec desde el proceso Rust; si el servidor no está corriendo, la petición fallará con un error de conexión. Asegúrate de que el backend responde antes de intentar importar.
+
+2. **La base URL del entorno es incorrecta.** Nala construye la URL del spec concatenando la base URL del entorno y la ruta del spec del servicio (por defecto `/openapi.json`). Si la base URL es `http://localhost:8000`, Nala pedirá `http://localhost:8000/openapi.json`. Verifica que esa URL responde con el JSON del spec en tu navegador o con `curl`.
+
+3. **La ruta del spec no es `/openapi.json`.** Algunos proyectos sirven el spec en una ruta distinta, como `/api/v1/openapi.json` o `/docs/openapi.json`. Al dar de alta el servicio (o en sus ajustes), cambia el campo **Ruta del spec** para que coincida con la ruta real.
+
+<Callout type="info">
+Nala hace las peticiones desde Rust, no desde el navegador, por lo que CORS no es un obstáculo. Si la URL responde con el spec, Nala puede importarlo independientemente de los headers `Access-Control-Allow-Origin` de la API.
+</Callout>
+
+Para un recorrido paso a paso del proceso de importación, consulta [Importar desde OpenAPI](/docs/guias-importar-openapi).
+
+---
+
+### Mi FastAPI emite OpenAPI 3.1. ¿Es compatible?
+
+Sí. Nala soporta tanto **OpenAPI 3.0** como **OpenAPI 3.1** y normaliza las diferencias entre ambas versiones en el motor Rust antes de renderizar los endpoints. Las versiones recientes de FastAPI emiten 3.1 por defecto; no tienes que hacer nada especial para que funcione.
+
+Si detectas algún endpoint o campo de esquema que no se renderiza correctamente, es probable que use una construcción específica de 3.1 que todavía no está cubierta. En ese caso, el constructor mostrará el **fallback a JSON crudo** para esa operación, que te permite enviar el body manualmente.
+
+---
+
+### La petición da timeout. ¿Cuánto tiempo espera Nala?
+
+El cliente HTTP de Nala corta las peticiones a los **60 segundos**. Si tu endpoint tarda más de ese tiempo en responder, recibirás un error de timeout en el panel de respuesta.
+
+Si el timeout es un problema recurrente con un endpoint concreto, verifica en el servidor que la operación no está bloqueada o esperando un recurso externo. El timeout de 60 s no es configurable en esta versión.
+
+---
+
+### Recibo un 401 al probar un endpoint protegido. ¿Qué hago?
+
+Un 401 indica que la petición no llevaba credenciales válidas o que el token ha caducado. El flujo a seguir depende de la estrategia de auth que uses:
+
+**Si no has configurado la autenticación todavía:**
+1. Ve a cualquier petición del servicio y abre la pestaña **Auth** en el constructor.
+2. En la sección **ESTRATEGIA · TODO EL SERVICIO**, elige la estrategia que usa tu API: Bearer, API key o Login.
+3. En la sección **SECRETO · ENTORNO «{env}»**, introduce el token, la API key o las credenciales del entorno activo.
+4. Con la estrategia Login, pulsa **Autenticar** para obtener el token.
+
+**Si ya tenías auth configurada y el token ha caducado:**
+Nala muestra un banner **«Sesión caducada (401)»** en el panel de respuesta. Si el entorno tiene credenciales recordadas, pulsa **Reautenticar**; si no, introduce las credenciales en el formulario del banner para obtener un token nuevo.
+
+Consulta la guía [Autenticación](/docs/guias-autenticacion) para el detalle completo de cada estrategia.
+
+---
+
+### ¿Funciona Nala sin conexión?
+
+En parte. Nala distingue dos tipos de operaciones con distintos requisitos de red:
+
+- **Navegar servicios y endpoints**: Funciona completamente sin conexión. Los snapshots del spec se guardan en local; puedes explorar el árbol de endpoints, leer la descripción de cada operación y abrir los formularios del constructor aunque la API no responda.
+- **Ejecutar el diff de esquemas**: También funciona sin conexión; el diff compara snapshots locales y no hace ninguna petición de red.
+- **Enviar peticiones**: Requiere que la API esté accesible. Si el servidor no responde, recibirás un error de conexión en el panel de respuesta.
+- **Refrescar el spec**: Requiere conexión; Nala descarga el `openapi.json` actualizado del servidor.
+
+---
+
+### ¿Dónde están mis datos? ¿Puedo hacer una copia de seguridad?
+
+Todos los datos de Nala están en un único archivo SQLite:
+
+```
+%AppData%\Roaming\Nala\data.db
+```
+
+Para hacer una copia de seguridad basta con copiar ese archivo con Nala cerrado. Para migrar a otra máquina, copia el archivo al mismo directorio en la máquina destino. Ten en cuenta que los secretos cifrados (tokens, API keys, credenciales recordadas) **no se descifrarán** en la máquina destino porque la clave de cifrado vive en el Windows Credential Manager de la máquina original y no viaja con la base de datos.
+
+<Callout type="warning">
+Si migras `data.db` a otra máquina, los datos no cifrados (servicios, entornos, historial, variables normales, snapshots) estarán disponibles. Los secretos cifrados aparecerán como no descifrables y tendrás que volver a introducirlos en cada entorno. Consulta [Seguridad y datos](/docs/referencia-seguridad-datos) para entender el modelo de cifrado.
+</Callout>
+
+---
+
+### ¿Cómo actualizo el spec de un servicio?
+
+Pulsa el botón **Refrescar** junto al nombre del servicio en la sidebar. Nala descargará el `openapi.json` actualizado del servidor y creará un nuevo snapshot. El árbol de endpoints se actualiza automáticamente con la nueva versión.
+
+Cada refresco genera un snapshot independiente que puedes usar para comparar con versiones anteriores en la pestaña **Diff de esquema**. Consulta [Diff de esquemas](/docs/guias-diff-esquemas).
+
+---
+
+### He marcado "Recordar credenciales" pero Nala sigue pidiéndolas. ¿Por qué?
+
+El check «Recordar credenciales (cifradas) para reauth automática» guarda las credenciales para que Nala pueda reautenticarse **automáticamente** cuando el token caduque, sin mostrarte el formulario. Pero hay situaciones en las que Nala pedirá las credenciales de todas formas:
+
+- **El token no ha caducado todavía**: El reauth automático solo se activa cuando el token existente caduca o cuando la API devuelve un 401. Mientras el token es válido, Nala lo usa directamente.
+- **Las credenciales recordadas son incorrectas**: Si la contraseña ha cambiado en el servidor, la reauth automática fallará y Nala te mostrará el formulario para que las actualices.
+- **La clave de Credential Manager ha cambiado**: Si las credenciales cifradas no se pueden descifrar, Nala las descarta y pide las credenciales de nuevo. Consulta [Seguridad y datos](/docs/referencia-seguridad-datos).

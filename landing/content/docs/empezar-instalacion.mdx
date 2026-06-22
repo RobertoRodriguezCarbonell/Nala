@@ -1,0 +1,47 @@
+---
+title: Instalación
+description: Descarga, requisitos y primer arranque en Windows.
+---
+
+# Instalación
+
+Nala es una aplicación de escritorio nativa para Windows. El proceso de instalación es el habitual para cualquier app de Windows: descarga el instalador, ejecútalo y arranca la aplicación.
+
+## Requisitos
+
+El único requisito de sistema es **Windows x64** (Windows 10 o superior). No hay que instalar dependencias adicionales, runtimes ni herramientas de Node o Rust: todo lo necesario va empaquetado en el instalador.
+
+## Descarga e instalación
+
+<Steps>
+<Step title="Descarga el instalador">
+Ve a la [página de releases del repositorio](https://github.com/RobertoRodriguezCarbonell/Nala/releases/latest) y descarga el archivo de la última versión. Hay dos formatos disponibles:
+
+- **`Nala_1.0.0_x64-setup.exe`** — instalador NSIS. Recomendado: instala Nala para el usuario actual sin necesitar permisos de administrador y añade un acceso directo en el escritorio.
+- **`Nala_1.0.0_x64.msi`** — paquete MSI. Útil si necesitas desplegar Nala via directivas de grupo u otras herramientas de administración.
+</Step>
+
+<Step title="Ejecuta el instalador">
+Haz doble clic en el archivo `.exe` (o `.msi`) descargado y sigue los pasos del asistente. En el caso del NSIS, el proceso es silencioso: instala Nala en `%LocalAppData%\Nala` y crea un acceso directo en el escritorio.
+
+Si Windows SmartScreen muestra una advertencia de "aplicación no reconocida", haz clic en **Más información → Ejecutar de todas formas**. Esto ocurre la primera vez porque el instalador todavía no tiene suficientes descargas para construir reputación en SmartScreen.
+</Step>
+
+<Step title="Primer arranque">
+Abre Nala desde el acceso directo del escritorio o desde el menú Inicio. En el **primer arranque** la aplicación realiza un paso de inicialización importante:
+
+1. Genera una clave de cifrado de 32 bytes aleatoria.
+2. La guarda de forma segura en el **Windows Credential Manager** bajo la entrada `Nala`.
+3. Crea la base de datos SQLite en `%AppData%\Roaming\Nala\data.db` en modo WAL (*Write-Ahead Logging*).
+
+Este proceso es automático y transparente; solo tarda un instante. A partir de ese momento, todos los secretos que manejes en Nala (tokens, credenciales de entornos) se cifran con esa clave antes de escribirse en disco.
+</Step>
+</Steps>
+
+## Actualizaciones
+
+Nala no incluye actualizador automático en esta versión. Para actualizar, descarga el nuevo instalador desde la página de releases y ejecútalo sobre la instalación existente. La base de datos y la clave de cifrado se conservan.
+
+<Callout type="info">
+Para entender en detalle cómo Nala gestiona tus datos en local y cómo funciona el cifrado de secretos, consulta [Arquitectura](/docs/conceptos-arquitectura) y [Seguridad y datos](/docs/referencia-seguridad-datos).
+</Callout>

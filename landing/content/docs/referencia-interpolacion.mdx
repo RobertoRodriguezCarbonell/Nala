@@ -1,0 +1,118 @@
+---
+title: Interpolación de variables
+description: Sintaxis {{var}}, dónde aplica y resolución por ámbito.
+---
+
+# Interpolación de variables
+
+La interpolación de variables es el mecanismo por el que Nala sustituye las marcas `{{nombreDeVariable}}` por sus valores reales en el momento de enviar una petición. Esto te permite escribir peticiones portables —con URL, headers y body independientes del entorno— y cambiar entre local, preview y producción sin tocar nada más que el selector de entorno.
+
+## Sintaxis
+
+La sintaxis básica es doble llave de apertura, nombre de la variable y doble llave de cierre:
+
+```
+{{nombreDeVariable}}
+```
+
+Puedes incluir espacios dentro de las llaves; las dos formas siguientes son equivalentes:
+
+```
+{{apiVersion}}
+{{ apiVersion }}
+```
+
+Los nombres de variable distinguen mayúsculas de minúsculas: `{{Token}}` y `{{token}}` son variables distintas.
+
+## Dónde aplica la interpolación
+
+La interpolación funciona en tres lugares del constructor de peticiones:
+
+| Campo | Ejemplos |
+|---|---|
+| **URL** | `{{baseUrl}}/api/{{apiVersion}}/orders`, `?page={{page}}` |
+| **Headers** | Nombre: `X-Tenant-Id`, Valor: `{{tenantId}}` |
+| **Body** | Campos JSON o de formulario con `{{customerId}}`, `{{amount}}`… |
+
+En la URL, la interpolación aplica tanto a la parte de base (`{{baseUrl}}`) como a los path params, la query string y cualquier fragmento de ruta que hayas parametrizado. En los headers, aplica al valor (y también al nombre si lo has escrito como variable, aunque es infrecuente). En el body JSON, aplica a los valores de cadena; los campos numéricos y booleanos que son variables se sustituyen antes de serializar el body.
+
+### La variable `{{baseUrl}}`
+
+`{{baseUrl}}` es una variable especial que Nala gestiona automáticamente: su valor es la **base URL** del entorno activo y se actualiza cada vez que cambias de entorno. No tienes que crearla ni definirla; existe en todos los entornos desde el primer momento.
+
+En el constructor, las rutas de los endpoints tienen siempre la forma `{{baseUrl}}/ruta/del/endpoint`. Al enviar, Nala sustituye `{{baseUrl}}` por la URL base del entorno activo —por ejemplo `http://localhost:8000` en local o `https://api.misitio.com` en producción— y construye la URL completa.
+
+## Resolución por ámbito
+
+Cuando hay varias variables con el mismo nombre definidas en distintos ámbitos, Nala aplica la siguiente regla de precedencia:
+
+**entorno > servicio > global**
+
+El ámbito más estrecho siempre gana. Si defines `timeout` a nivel global con valor `30` y también a nivel de entorno con valor `60`, Nala usa `60` cuando ese entorno está activo.
+
+### Tabla de ámbitos
+
+| Ámbito | Disponible en | Cuándo usarlo |
+|---|---|---|
+| **Global** | Todos los servicios y todos sus entornos | Valores verdaderamente transversales: versión de la API usada en todos los proyectos, identificadores globales, constantes compartidas. |
+| **Servicio** | Todos los entornos de un servicio concreto | Valores específicos de esa API pero comunes a todos sus entornos: nombre del tenant, tamaño de página por defecto, identificador de la organización. |
+| **Entorno** | Solo el entorno concreto al que pertenece | Valores que cambian entre local, preview y producción: IDs de prueba, credenciales de usuario, configuración específica de ese destino. |
+
+El gestor de variables muestra siempre el recordatorio de precedencia en la cabecera: **`{{var}} · entorno > servicio > global`**.
+
+## Variables marcadas como secreto
+
+Cualquier variable puede marcarse como **Secreto** al crearla o editarla. Las variables secretas:
+
+- Aparecen en la lista del gestor con el valor redactado como `••••`.
+- El valor se guarda en **texto claro** en la base de datos, sin cifrado. El flag de secreto solo redacta la visualización; no protege el valor en reposo.
+- Se interpolan normalmente en tiempo de envío —el valor real llega a la petición—, pero nunca se muestran en texto claro en la UI.
+
+<Callout type="warning">
+Si necesitas que un token o API key esté cifrado en disco, usa el secreto de autenticación del entorno (Bearer, API key o credenciales de login), que sí se cifra con AES-256-GCM. Consulta la guía [Autenticación](/docs/guias-autenticacion). Para el modelo de datos completo, consulta [Seguridad y datos](/docs/referencia-seguridad-datos).
+</Callout>
+
+## Variables sin resolver
+
+Si usas `{{nombreDeVariable}}` en una petición pero no hay ninguna variable con ese nombre definida en ningún ámbito, Nala deja la cadena literal en la petición sin modificarla. El servidor recibe el texto `{{nombreDeVariable}}` tal cual.
+
+Esto no bloquea el envío, pero casi siempre causará un error en el lado del servidor (un 422 por valor inválido, un error de autenticación si la variable era un token, etc.). El constructor marca en naranja las variables que no resuelven para avisarte antes de que pulses **Enviar**.
+
+## Ejemplo práctico
+
+Supón el siguiente esquema de variables:
+
+**Global:**
+- `apiVersion` = `v2`
+
+**Servicio `Calclon API`:**
+- `defaultPageSize` = `20`
+
+**Entorno `prod`:**
+- `customerId` = `cust_8821`
+
+Una petición con la URL:
+
+```
+{{baseUrl}}/api/{{apiVersion}}/orders?page_size={{defaultPageSize}}&customer={{customerId}}
+```
+
+…se resuelve en el entorno `prod` como:
+
+```
+https://api.calclon.com/api/v2/orders?page_size=20&customer=cust_8821
+```
+
+Si cambias al entorno `local` (donde `customerId` no está definida), el resultado sería:
+
+```
+http://localhost:8000/api/v2/orders?page_size=20&customer={{customerId}}
+```
+
+La variable `{{customerId}}` pasa sin resolver porque no existe en `local` ni a nivel de servicio ni a nivel global.
+
+<Callout type="tip">
+Para mantener las peticiones limpias, define en el ámbito de entorno los valores que cambian entre destinos, y en el ámbito de servicio los que son constantes para toda la API. Así el cambio de entorno con el selector es suficiente para apuntar a otro destino sin modificar nada más.
+</Callout>
+
+Para más contexto sobre la creación y gestión de entornos y variables, consulta la guía [Entornos y variables](/docs/guias-entornos-variables).
