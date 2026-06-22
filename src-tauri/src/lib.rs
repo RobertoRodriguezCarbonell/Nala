@@ -3,6 +3,7 @@ mod api;
 mod commands;
 mod crypto;
 mod db;
+mod discover;
 mod error;
 mod history;
 mod http;
@@ -74,6 +75,7 @@ pub fn run() {
             api::list_saved_requests,
             api::update_saved_request,
             api::delete_saved_request,
+            api::discover_localhost,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");

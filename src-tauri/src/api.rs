@@ -676,3 +676,11 @@ pub fn delete_saved_request(state: State<AppState>, id: i64) -> Result<(), AppEr
     let conn = state.db.lock().expect("db lock");
     store::delete_saved_request(&conn, id)
 }
+
+// ---------- Descubrimiento de localhost ----------
+
+/// Sondea los puertos comunes de 127.0.0.1 y devuelve los servicios FastAPI hallados.
+#[tauri::command]
+pub async fn discover_localhost() -> Vec<crate::discover::Discovered> {
+    crate::discover::discover().await
+}
