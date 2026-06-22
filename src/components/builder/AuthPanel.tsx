@@ -4,6 +4,8 @@ import { useServicesStore } from "../../store/servicesStore";
 import { useConfirmStore } from "../../store/confirmStore";
 import type { AuthKind } from "../../types/http";
 import { LoginAuthSection } from "./LoginAuthSection";
+import { Input } from "../ui/Input";
+import { Button } from "../ui/Button";
 
 const KINDS: { value: AuthKind; label: string }[] = [
   { value: "none", label: "Ninguna" },
@@ -17,28 +19,6 @@ const labelStyle: React.CSSProperties = {
   fontSize: 10.5,
   color: "var(--text-faint)",
   letterSpacing: "0.5px",
-};
-
-const inputStyle: React.CSSProperties = {
-  background: "var(--bg-input)",
-  border: "0.5px solid var(--border-input)",
-  borderRadius: "var(--radius-input)",
-  padding: "7px 10px",
-  fontSize: 12,
-  color: "var(--text-secondary)",
-  outline: "none",
-  fontFamily: "var(--font-mono)",
-};
-
-const textBtn: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 11.5,
-  padding: "4px 8px",
-  background: "transparent",
-  border: "0.5px solid var(--border-control)",
-  borderRadius: "var(--radius-control)",
-  color: "var(--text-secondary)",
-  cursor: "pointer",
 };
 
 export function AuthPanel({ serviceId }: { serviceId: number }) {
@@ -107,12 +87,14 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
 
         {kind === "apiKey" && (
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+            {/* Input no controlado: confirma el nombre al perder el foco */}
             <input
               key={apiKeyName}
               defaultValue={apiKeyName}
               onBlur={(e) => onApiKey(e.target.value.trim() || "X-API-Key", apiKeyIn)}
               placeholder="Nombre del parámetro"
-              style={{ ...inputStyle, flex: 1 }}
+              className="mono"
+              style={{ background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)", padding: "7px 10px", fontSize: "var(--text-sm)", color: "var(--text-secondary)", outline: "none", flex: 1 }}
             />
             <div
               style={{
@@ -159,16 +141,18 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
               <span className="mono" style={{ fontSize: 12, color: "var(--accent)" }}>
                 •••• configurado
               </span>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setEditing(true);
                   setSecret("");
                 }}
-                style={textBtn}
+                style={{ padding: "4px 8px" }}
               >
                 Reemplazar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={() =>
                   confirm({
                     title: "Borrar secreto",
@@ -177,41 +161,31 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
                     onConfirm: () => clearSecret(serviceId, env.id),
                   })
                 }
-                style={{ ...textBtn, color: "var(--status-5xx)" }}
+                style={{ padding: "4px 8px" }}
               >
                 Borrar
-              </button>
+              </Button>
             </div>
           ) : (
             <div style={{ display: "flex", gap: 8 }}>
-              <input
+              <Input
                 type="password"
                 value={secret}
-                onChange={(e) => setSecret(e.target.value)}
+                onChange={setSecret}
                 placeholder={kind === "bearer" ? "Pega el token" : "Pega el valor de la API key"}
-                style={{ ...inputStyle, flex: 1 }}
+                style={{ flex: 1 }}
               />
-              <button
+              <Button
+                variant="primary"
                 disabled={secret.trim() === ""}
                 onClick={async () => {
                   await saveSecret(serviceId, env.id, secret.trim());
                   setSecret("");
                   setEditing(false);
                 }}
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 11.5,
-                  padding: "7px 14px",
-                  borderRadius: "var(--radius-control)",
-                  border: "none",
-                  cursor: secret.trim() === "" ? "default" : "pointer",
-                  background: "var(--accent)",
-                  color: "var(--bg-app)",
-                  opacity: secret.trim() === "" ? 0.5 : 1,
-                }}
               >
                 Guardar
-              </button>
+              </Button>
             </div>
           )}
         </div>
