@@ -12,6 +12,7 @@ export function Footer() {
         <div className="flex items-center gap-6 text-sm text-fg-muted">
           <a href="#caracteristicas" className="hover:text-fg">Características</a>
           <a href="#como-funciona" className="hover:text-fg">Cómo funciona</a>
+          <a href="/docs" className="hover:text-fg">Docs</a>
           <a href={LINKS.github} className="hover:text-fg">GitHub</a>
         </div>
         <span className="font-mono text-xs text-fg-faint">Hecho por Roberto Rodríguez Carbonell</span>
