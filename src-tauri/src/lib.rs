@@ -76,6 +76,10 @@ pub fn run() {
             api::update_saved_request,
             api::delete_saved_request,
             api::discover_localhost,
+            api::create_sequence,
+            api::list_sequences,
+            api::update_sequence,
+            api::delete_sequence,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Nala");
