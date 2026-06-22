@@ -11,13 +11,18 @@ use serde_json::{Map, Value};
 pub fn generate_typescript(spec: &Value) -> String {
     let title = spec.pointer("/info/title").and_then(|v| v.as_str()).unwrap_or("API");
     let version = spec.pointer("/info/version").and_then(|v| v.as_str()).unwrap_or("");
-
-    let mut out = String::new();
     let header = format!("// Tipos generados por Nala desde {title} {version}");
+    let mut out = String::new();
     out.push_str(header.trim_end());
     out.push('\n');
-    out.push_str("// Modelos de components/schemas — no editar a mano.\n");
+    out.push_str(&emit_models(spec));
+    out
+}
 
+/// Bloque de modelos (sin la cabecera de archivo). Reutilizado por el cliente.
+fn emit_models(spec: &Value) -> String {
+    let mut out = String::new();
+    out.push_str("// Modelos de components/schemas — no editar a mano.\n");
     match spec.pointer("/components/schemas").and_then(|v| v.as_object()) {
         Some(map) if !map.is_empty() => {
             for (name, schema) in map {
@@ -28,6 +33,293 @@ pub fn generate_typescript(spec: &Value) -> String {
         _ => out.push_str("\n// (sin modelos)\n"),
     }
     out
+}
+
+const CLIENT_METHODS: &[&str] = &["get", "post", "put", "patch", "delete", "head", "options", "trace"];
+
+const CLIENT_RUNTIME: &str = r#"
+export class ApiError extends Error {
+  constructor(public status: number, public statusText: string, public body: unknown) {
+    super(`HTTP ${status} ${statusText}`);
+    this.name = "ApiError";
+  }
+}
+
+export interface ClientConfig {
+  baseUrl: string;
+  headers?: Record<string, string>;
+  fetch?: typeof fetch;
+}
+
+function buildQuery(q?: Record<string, unknown>): string {
+  if (!q) return "";
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== null) p.append(k, String(v));
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
+async function request<T>(
+  cfg: ClientConfig,
+  method: string,
+  path: string,
+  opts: { query?: Record<string, unknown>; body?: unknown } = {},
+): Promise<T> {
+  const f = cfg.fetch ?? fetch;
+  const headers: Record<string, string> = { ...cfg.headers };
+  let body: string | undefined;
+  if (opts.body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(opts.body);
+  }
+  const res = await f(cfg.baseUrl + path + buildQuery(opts.query), { method, headers, body });
+  const text = await res.text();
+  const parsed = text ? JSON.parse(text) : undefined;
+  if (!res.ok) throw new ApiError(res.status, res.statusText, parsed);
+  return parsed as T;
+}
+"#;
+
+/// Parámetro de operación ya normalizado a lo que necesita el cliente.
+struct ClientParam {
+    name: String,
+    location: String,
+    required: bool,
+    schema: Value,
+}
+
+/// Emite el cliente TS completo (modelos + runtime + createClient).
+pub fn generate_client(spec: &Value) -> String {
+    let title = spec.pointer("/info/title").and_then(|v| v.as_str()).unwrap_or("API");
+    let version = spec.pointer("/info/version").and_then(|v| v.as_str()).unwrap_or("");
+    let header = format!("// Cliente TS generado por Nala desde {title} {version}");
+
+    let mut out = String::new();
+    out.push_str(header.trim_end());
+    out.push('\n');
+    out.push_str(&emit_models(spec));
+    out.push_str(CLIENT_RUNTIME);
+    out.push('\n');
+    out.push_str(&emit_create_client(spec));
+    out
+}
+
+fn emit_create_client(spec: &Value) -> String {
+    let mut out = String::new();
+    out.push_str("export function createClient(config: ClientConfig) {\n");
+    out.push_str("  return {\n");
+    if let Some(paths) = spec.pointer("/paths").and_then(|v| v.as_object()) {
+        for (path, item) in paths {
+            for &m in CLIENT_METHODS {
+                if let Some(op) = item.get(m) {
+                    out.push_str(&emit_method(path, m, op, item));
+                }
+            }
+        }
+    }
+    out.push_str("  };\n");
+    out.push_str("}\n");
+    out
+}
+
+/// Mezcla los parámetros del path-item y de la operación (la op gana por (name,in)).
+fn merged_params(op: &Value, path_item: &Value) -> Vec<ClientParam> {
+    let mut out: Vec<ClientParam> = Vec::new();
+    let mut seen: Vec<(String, String)> = Vec::new();
+    for src in [op.get("parameters"), path_item.get("parameters")] {
+        if let Some(arr) = src.and_then(|v| v.as_array()) {
+            for p in arr {
+                let name = match p.get("name").and_then(|v| v.as_str()) {
+                    Some(n) => n.to_string(),
+                    None => continue,
+                };
+                let location = match p.get("in").and_then(|v| v.as_str()) {
+                    Some(l) => l.to_string(),
+                    None => continue,
+                };
+                let key = (name.clone(), location.clone());
+                if seen.contains(&key) {
+                    continue;
+                }
+                seen.push(key);
+                let required = p.get("required").and_then(|v| v.as_bool()).unwrap_or(location == "path");
+                let schema = p.get("schema").cloned().unwrap_or(Value::Null);
+                out.push(ClientParam { name, location, required, schema });
+            }
+        }
+    }
+    out
+}
+
+fn request_body(op: &Value) -> Option<(Value, bool)> {
+    let rb = op.get("requestBody")?;
+    let required = rb.get("required").and_then(|v| v.as_bool()).unwrap_or(false);
+    let content = rb.get("content").and_then(|v| v.as_object())?;
+    let media = content
+        .iter()
+        .find(|(k, _)| k.contains("json"))
+        .or_else(|| content.iter().next())?
+        .1;
+    let schema = media.get("schema").cloned()?;
+    Some((schema, required))
+}
+
+fn primary_response_schema(op: &Value) -> Option<Value> {
+    let resps = op.get("responses").and_then(|v| v.as_object())?;
+    let mut candidates: Vec<(&String, &Value)> = resps
+        .iter()
+        .filter(|(status, _)| status.starts_with('2'))
+        .collect();
+    candidates.sort_by(|a, b| a.0.cmp(b.0));
+    for (_, r) in candidates {
+        if let Some(content) = r.get("content").and_then(|v| v.as_object()) {
+            let media = content.iter().find(|(k, _)| k.contains("json")).or_else(|| content.iter().next());
+            if let Some((_, m)) = media {
+                if let Some(schema) = m.get("schema") {
+                    return Some(schema.clone());
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Acceso a un miembro: `base.name` si es identificador válido, `base["name"]` si no.
+fn member_access(base: &str, name: &str) -> String {
+    let mut chars = name.chars();
+    let valid_first = matches!(chars.next(), Some(c) if c.is_ascii_alphabetic() || c == '_' || c == '$');
+    let valid_rest = name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$');
+    if !name.is_empty() && valid_first && valid_rest {
+        format!("{base}.{name}")
+    } else {
+        format!("{base}[\"{}\"]", name.replace('"', "\\\""))
+    }
+}
+
+/// Convierte un operationId / nombre a un identificador camelCase válido.
+fn camel_ident(s: &str) -> String {
+    let mut out = String::new();
+    let mut upper_next = false;
+    for c in s.chars() {
+        if c == '_' || c == '-' || c == ' ' || c == '.' {
+            upper_next = true;
+            continue;
+        }
+        if !c.is_ascii_alphanumeric() && c != '$' {
+            continue;
+        }
+        if upper_next {
+            out.extend(c.to_uppercase());
+            upper_next = false;
+        } else {
+            out.push(c);
+        }
+    }
+    if out.is_empty() {
+        out.push('_');
+    }
+    if out.chars().next().map_or(false, |c| c.is_ascii_digit()) {
+        out.insert(0, '_');
+    }
+    out
+}
+
+fn method_name(op: &Value, method: &str, path: &str) -> String {
+    if let Some(id) = op.get("operationId").and_then(|v| v.as_str()) {
+        if !id.trim().is_empty() {
+            return camel_ident(id);
+        }
+    }
+    let mut name = method.to_string();
+    for seg in path.split('/').filter(|s| !s.is_empty()) {
+        let clean = seg.trim_start_matches('{').trim_end_matches('}');
+        let mut chars = clean.chars();
+        if let Some(first) = chars.next() {
+            name.extend(first.to_uppercase());
+            name.push_str(chars.as_str());
+        }
+    }
+    camel_ident(&name)
+}
+
+/// Sustituye `{x}` en la ruta por `${encodeURIComponent(String(params.x))}`.
+fn path_template(path: &str) -> String {
+    let mut out = String::new();
+    let mut rest = path;
+    while let Some(start) = rest.find('{') {
+        out.push_str(&rest[..start]);
+        if let Some(end) = rest[start..].find('}') {
+            let name = &rest[start + 1..start + end];
+            out.push_str(&format!("${{encodeURIComponent(String({}))}}", member_access("params", name)));
+            rest = &rest[start + end + 1..];
+        } else {
+            out.push_str(&rest[start..]);
+            rest = "";
+            break;
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+fn emit_method(path: &str, method: &str, op: &Value, path_item: &Value) -> String {
+    let name = method_name(op, method, path);
+    let params = merged_params(op, path_item);
+    let path_ps: Vec<&ClientParam> = params.iter().filter(|p| p.location == "path").collect();
+    let query_ps: Vec<&ClientParam> = params.iter().filter(|p| p.location == "query").collect();
+
+    // Tipo del objeto `params`.
+    let mut fields: Vec<String> = Vec::new();
+    for p in &path_ps {
+        fields.push(format!("{}: {}", prop_key(&p.name), type_expr(&p.schema)));
+    }
+    for p in &query_ps {
+        let opt = if p.required { "" } else { "?" };
+        fields.push(format!("{}{}: {}", prop_key(&p.name), opt, type_expr(&p.schema)));
+    }
+    let has_params = !fields.is_empty();
+    let all_optional = path_ps.is_empty() && query_ps.iter().all(|p| !p.required);
+
+    let body = request_body(op);
+    let ret = primary_response_schema(op).map(|s| type_expr(&s)).unwrap_or_else(|| "void".into());
+
+    // Argumentos.
+    let mut args: Vec<String> = Vec::new();
+    if has_params {
+        let default = if all_optional { " = {}" } else { "" };
+        args.push(format!("params: {{ {} }}{}", fields.join("; "), default));
+    }
+    if let Some((bschema, brequired)) = &body {
+        let opt = if *brequired { "" } else { "?" };
+        args.push(format!("body{}: {}", opt, type_expr(bschema)));
+    }
+
+    // Opciones de `request`.
+    let mut opt_parts: Vec<String> = Vec::new();
+    if !query_ps.is_empty() {
+        let q = query_ps
+            .iter()
+            .map(|p| format!("{}: {}", prop_key(&p.name), member_access("params", &p.name)))
+            .collect::<Vec<_>>()
+            .join(", ");
+        opt_parts.push(format!("query: {{ {q} }}"));
+    }
+    if body.is_some() {
+        opt_parts.push("body".into());
+    }
+    let opts_obj = if opt_parts.is_empty() {
+        "{}".to_string()
+    } else {
+        format!("{{ {} }}", opt_parts.join(", "))
+    };
+
+    format!(
+        "    {name}: ({}): Promise<{ret}> =>\n      request(config, \"{}\", `{}`, {}),\n",
+        args.join(", "),
+        method.to_uppercase(),
+        path_template(path),
+        opts_obj
+    )
 }
 
 /// Emite una declaración top-level: `interface` si es objeto con propiedades,
@@ -392,6 +684,72 @@ mod tests {
         let spec = json!({ "openapi": "3.1.0", "info": { "title": "Vacía", "version": "1" } });
         let ts = generate_typescript(&spec);
         assert!(ts.contains("// (sin modelos)"));
+    }
+
+    fn client_spec() -> Value {
+        json!({
+            "openapi": "3.1.0",
+            "info": { "title": "Mesero API", "version": "1.0.0" },
+            "paths": {
+                "/reservas": {
+                    "get": {
+                        "operationId": "list_reservas",
+                        "parameters": [
+                            { "name": "estado", "in": "query", "required": false, "schema": { "type": "string" } }
+                        ],
+                        "responses": { "200": { "description": "OK", "content": { "application/json": {
+                            "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Reserva" } }
+                        }}}}
+                    },
+                    "post": {
+                        "operationId": "crear_reserva",
+                        "requestBody": { "required": true, "content": { "application/json": {
+                            "schema": { "$ref": "#/components/schemas/ReservaCreate" }
+                        }}},
+                        "responses": { "201": { "description": "Creada", "content": { "application/json": {
+                            "schema": { "$ref": "#/components/schemas/Reserva" }
+                        }}}}
+                    }
+                },
+                "/reservas/{id}": {
+                    "get": {
+                        "operationId": "get_reserva",
+                        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+                        "responses": { "200": { "description": "OK", "content": { "application/json": {
+                            "schema": { "$ref": "#/components/schemas/Reserva" }
+                        }}}}
+                    }
+                }
+            },
+            "components": { "schemas": {
+                "Reserva": { "type": "object", "properties": { "id": { "type": "integer" } } },
+                "ReservaCreate": { "type": "object", "required": ["cliente"], "properties": { "cliente": { "type": "string" } } }
+            }}
+        })
+    }
+
+    #[test]
+    fn cliente_runtime_y_factory() {
+        let ts = generate_client(&client_spec());
+        assert!(ts.contains("class ApiError"));
+        assert!(ts.contains("export interface ClientConfig"));
+        assert!(ts.contains("async function request<T>"));
+        assert!(ts.contains("export function createClient(config: ClientConfig) {"));
+        // los modelos se incluyen
+        assert!(ts.contains("export interface ReservaCreate {"));
+    }
+
+    #[test]
+    fn cliente_metodos_tipados() {
+        let ts = generate_client(&client_spec());
+        // body como 2º arg, retorno tipado
+        assert!(ts.contains("crearReserva: (body: ReservaCreate): Promise<Reserva> =>"));
+        // path param interpolado
+        assert!(ts.contains("getReserva: (params: { id: number }): Promise<Reserva> =>"));
+        assert!(ts.contains("/reservas/${encodeURIComponent(String(params.id))}"));
+        // query opcional con default y objeto de query
+        assert!(ts.contains("listReservas: (params: { estado?: string } = {}): Promise<Reserva[]> =>"));
+        assert!(ts.contains("query: { estado: params.estado }"));
     }
 
     #[test]

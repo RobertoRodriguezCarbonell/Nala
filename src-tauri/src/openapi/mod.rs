@@ -6,7 +6,7 @@ mod diff;
 mod fetch;
 mod normalize;
 
-pub use codegen::generate_typescript;
+pub use codegen::{generate_client, generate_typescript};
 pub use diff::{diff_specs, SchemaDiff, SnapshotRef};
 pub use fetch::fetch_spec;
 pub use normalize::normalize;
