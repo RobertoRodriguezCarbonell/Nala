@@ -3,6 +3,8 @@ import { useSavedRequestsStore } from "../../store/savedRequestsStore";
 import { useServicesStore } from "../../store/servicesStore";
 import { useConfirmStore } from "../../store/confirmStore";
 import { EmptyState } from "../ui/EmptyState";
+import { Select } from "../ui/Select";
+import { Checkbox } from "../ui/Checkbox";
 import { listVariables, sendRequest } from "../../lib/tauri";
 import { buildVarMap } from "../../lib/interpolate";
 import { buildHttpRequest, matchesExpected, SMOKE_STATUS_OPTIONS } from "../../lib/request";
@@ -103,22 +105,17 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
           const res = results[r.id];
           return (
             <div key={r.id} style={{ display: "grid", gridTemplateColumns: "auto 56px 1fr auto auto auto", alignItems: "center", gap: 10, padding: "8px 13px", borderBottom: "0.5px solid var(--border-row)" }}>
-              <input type="checkbox" checked={r.isSmoke} onChange={(e) => void update(r.id, serviceId, r.name, e.target.checked, r.expectedStatus)} />
+              <Checkbox on={r.isSmoke} onToggle={() => void update(r.id, serviceId, r.name, !r.isSmoke, r.expectedStatus)} />
               <span className="mono" style={{ fontSize: 11, fontWeight: 600, color: methodColor(r.method) }}>{r.method}</span>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                 <div className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.path}</div>
               </div>
-              <select
-                value={r.expectedStatus}
-                onChange={(e) => void update(r.id, serviceId, r.name, r.isSmoke, e.target.value)}
-                className="mono"
-                style={{ fontSize: 11, background: "var(--bg-input)", color: "var(--text-secondary)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "3px 5px" }}
-              >
+              <Select value={r.expectedStatus} onChange={(v) => void update(r.id, serviceId, r.name, r.isSmoke, v)}>
                 {SMOKE_STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
-              </select>
+              </Select>
               <span className="mono" style={{ fontSize: 11, minWidth: 44, textAlign: "right", color: res ? (res.ok ? "var(--status-2xx)" : "var(--status-5xx)") : "var(--text-disabled)" }}>
                 {res ? (res.status ?? "ERR") : "—"}
               </span>

@@ -2,46 +2,15 @@ import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { useConfirmStore } from "../../store/confirmStore";
 import type { AuthStatus, LoginConfig } from "../../types/http";
+import { Input } from "../ui/Input";
+import { Checkbox } from "../ui/Checkbox";
+import { Button } from "../ui/Button";
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 10.5,
   color: "var(--text-faint)",
   letterSpacing: "0.5px",
-};
-
-const inputStyle: React.CSSProperties = {
-  background: "var(--bg-input)",
-  border: "0.5px solid var(--border-input)",
-  borderRadius: "var(--radius-input)",
-  padding: "7px 10px",
-  fontSize: 12,
-  color: "var(--text-secondary)",
-  outline: "none",
-  fontFamily: "var(--font-mono)",
-};
-
-const primaryBtn = (disabled: boolean): React.CSSProperties => ({
-  fontFamily: "var(--font-mono)",
-  fontSize: 11.5,
-  padding: "7px 14px",
-  borderRadius: "var(--radius-control)",
-  border: "none",
-  cursor: disabled ? "default" : "pointer",
-  background: "var(--accent)",
-  color: "var(--bg-app)",
-  opacity: disabled ? 0.5 : 1,
-});
-
-const textBtn: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 11.5,
-  padding: "4px 8px",
-  background: "transparent",
-  border: "0.5px solid var(--border-control)",
-  borderRadius: "var(--radius-control)",
-  color: "var(--text-secondary)",
-  cursor: "pointer",
 };
 
 function tokenLine(status: AuthStatus | undefined): { text: string; color: string } {
@@ -101,6 +70,7 @@ export function LoginAuthSection({
     void saveStrategy(serviceId, "login", next as Record<string, unknown>, environmentId ?? undefined);
   };
 
+  // Input no controlado: confirma el valor al perder el foco (evita re-render mientras se teclea)
   const cfgInput = (
     value: string,
     onCommit: (v: string) => void,
@@ -114,7 +84,8 @@ export function LoginAuthSection({
         if (v && v !== value) onCommit(v);
       }}
       placeholder={placeholder}
-      style={{ ...inputStyle, flex: 1, minWidth: 0 }}
+      className="mono"
+      style={{ background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)", padding: "7px 10px", fontSize: "var(--text-sm)", color: "var(--text-secondary)", outline: "none", flex: 1, minWidth: 0 }}
     />
   );
 
@@ -181,21 +152,27 @@ export function LoginAuthSection({
               <span className="mono" style={{ fontSize: 12, color: token.color }}>{token.text}</span>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <input value={user} onChange={(e) => setUser(e.target.value)} placeholder="usuario" style={{ ...inputStyle, flex: 1, minWidth: 0 }} />
-              <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="clave" style={{ ...inputStyle, flex: 1, minWidth: 0 }} />
+              <Input value={user} onChange={setUser} placeholder="usuario" style={{ flex: 1, minWidth: 0 }} />
+              <Input type="password" value={pass} onChange={setPass} placeholder="clave" style={{ flex: 1, minWidth: 0 }} />
             </div>
             <label className="mono" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, color: "var(--text-secondary)", cursor: "pointer" }}>
-              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+              <Checkbox on={remember} onToggle={() => setRemember(!remember)} />
               Recordar credenciales (cifradas) para reauth automática
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button disabled={busy || user.trim() === "" || pass === ""} onClick={() => void onAuthenticate()} style={primaryBtn(busy || user.trim() === "" || pass === "")}>
+              <Button
+                variant="primary"
+                disabled={busy || user.trim() === "" || pass === ""}
+                onClick={() => void onAuthenticate()}
+              >
                 {busy ? "Autenticando…" : "Autenticar"}
-              </button>
+              </Button>
               {status?.hasCredentials && (
                 <>
                   <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>•••• credenciales recordadas</span>
-                  <button
+                  <Button
+                    variant="danger"
+                    style={{ padding: "4px 8px" }}
                     onClick={() =>
                       confirm({
                         title: "Olvidar credenciales",
@@ -204,8 +181,7 @@ export function LoginAuthSection({
                         onConfirm: () => forgetCredentials(serviceId, environmentId),
                       })
                     }
-                    style={{ ...textBtn, color: "var(--status-5xx)" }}
-                  >Olvidar</button>
+                  >Olvidar</Button>
                 </>
               )}
             </div>

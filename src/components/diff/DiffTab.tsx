@@ -3,6 +3,7 @@ import { listSnapshots, diffSnapshots } from "../../lib/tauri";
 import type { SnapshotMeta } from "../../lib/tauri";
 import type { SchemaDiff, Change } from "../../types/diff";
 import { EmptyState } from "../ui/EmptyState";
+import { Select } from "../ui/Select";
 
 /**
  * Pestaña "Diff de esquema": elige dos snapshots de un servicio y muestra los
@@ -155,18 +156,13 @@ function SnapshotSelect({
   return (
     <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <span className="mono" style={{ fontSize: 11, color: "var(--text-faint)" }}>{label}</span>
-      <select
-        value={value ?? ""}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="mono"
-        style={{ fontSize: 11.5, background: "var(--bg-input)", color: "var(--text-secondary)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "3px 6px" }}
-      >
+      <Select value={String(value ?? "")} onChange={(v) => onChange(Number(v))} style={{ fontSize: 11.5 }}>
         {options.map((s) => (
           <option key={s.id} value={s.id}>
             {(s.apiVersion ?? "—") + " · " + s.fetchedAt + " · " + s.endpointCount + " endpoints"}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 }

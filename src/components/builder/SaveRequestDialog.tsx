@@ -3,6 +3,10 @@ import { useSavedRequestsStore } from "../../store/savedRequestsStore";
 import { draftFromTab, SMOKE_STATUS_OPTIONS } from "../../lib/request";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
+import { Checkbox } from "../ui/Checkbox";
+import { Field } from "../ui/Field";
 import type { OpenTab, TabState } from "../../store/requestStore";
 
 /** Diálogo para guardar la petición del tab activo (opcionalmente como smoke). */
@@ -58,34 +62,25 @@ export function SaveRequestDialog({
         </>
       }
     >
-      <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-        <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>Nombre</span>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="mono"
-          style={{ background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)", padding: "7px 10px", fontSize: "var(--text-sm)", color: "var(--text-secondary)", outline: "none" }}
-        />
-      </label>
+      {/* Etiqueta vertical → Field */}
+      <Field label="Nombre">
+        <Input value={name} onChange={setName} />
+      </Field>
 
+      {/* Etiqueta horizontal → label nativo + Checkbox primitiva */}
       <label style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-        <input type="checkbox" checked={isSmoke} onChange={(e) => setIsSmoke(e.target.checked)} />
+        <Checkbox on={isSmoke} onToggle={() => setIsSmoke(!isSmoke)} />
         <span style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>Marcar como smoke</span>
       </label>
 
+      {/* Etiqueta horizontal → label nativo + Select primitiva */}
       <label style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", opacity: isSmoke ? 1 : 0.5 }}>
         <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>Status esperado</span>
-        <select
-          value={expected}
-          onChange={(e) => setExpected(e.target.value)}
-          disabled={!isSmoke}
-          className="mono"
-          style={{ fontSize: "var(--text-xs)", background: "var(--bg-input)", color: "var(--text-secondary)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "4px 6px" }}
-        >
+        <Select value={expected} onChange={setExpected} disabled={!isSmoke}>
           {SMOKE_STATUS_OPTIONS.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
-        </select>
+        </Select>
       </label>
 
       {error && (

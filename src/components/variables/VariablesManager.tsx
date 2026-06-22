@@ -4,6 +4,8 @@ import { useServicesStore } from "../../store/servicesStore";
 import { useConfirmStore } from "../../store/confirmStore";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
 import type { VariableScope } from "../../types/http";
 
 /**
@@ -93,28 +95,19 @@ export function VariablesManager() {
 
       {/* Fila de nueva variable */}
       <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "0 -16px", padding: "12px 16px 0", borderTop: "0.5px solid var(--border)" }}>
-        <select value={scope} onChange={(e) => setScope(e.target.value as VariableScope)} style={selStyle}>
+        <Select
+          value={scope}
+          onChange={(v) => setScope(v as VariableScope)}
+          style={{ width: 110, padding: "7px 10px", fontSize: "var(--text-sm)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)", flex: "none" }}
+        >
           <option value="global">global</option>
           <option value="service" disabled={activeServiceId == null}>{serviceName}</option>
           <option value="environment" disabled={activeEnvironmentId == null}>entorno</option>
-        </select>
-        <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="clave" style={{ ...inp, flex: 1 }} />
-        <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="valor" style={{ ...inp, flex: 1 }} onKeyDown={(e) => e.key === "Enter" && void add()} />
+        </Select>
+        <Input value={key} onChange={setKey} placeholder="clave" style={{ flex: 1 }} />
+        <Input value={val} onChange={setVal} placeholder="valor" onKeyDown={(e) => { if (e.key === "Enter") void add(); }} style={{ flex: 1 }} />
       </div>
     </Modal>
   );
 }
 
-const inp: React.CSSProperties = {
-  background: "var(--bg-input)",
-  border: "0.5px solid var(--border-input)",
-  borderRadius: "var(--radius-input)",
-  padding: "7px 10px",
-  fontFamily: "var(--font-mono)",
-  fontSize: 12,
-  color: "var(--text-primary)",
-  outline: "none",
-  minWidth: 0,
-};
-
-const selStyle: React.CSSProperties = { ...inp, cursor: "pointer", width: 110, flex: "none" };

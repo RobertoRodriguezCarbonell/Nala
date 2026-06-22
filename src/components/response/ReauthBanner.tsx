@@ -2,18 +2,8 @@ import { useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import { useAuthStore } from "../../store/authStore";
 import { useServicesStore } from "../../store/servicesStore";
-
-const inputStyle: React.CSSProperties = {
-  background: "var(--bg-input)",
-  border: "0.5px solid var(--border-input)",
-  borderRadius: "var(--radius-input)",
-  padding: "5px 8px",
-  fontSize: 11.5,
-  color: "var(--text-secondary)",
-  outline: "none",
-  fontFamily: "var(--font-mono)",
-  width: 110,
-};
+import { Input } from "../ui/Input";
+import { Button } from "../ui/Button";
 
 export function ReauthBanner() {
   const activeTabId = useRequestStore((s) => s.activeTabId);
@@ -62,16 +52,26 @@ export function ReauthBanner() {
         Sesión caducada (401){remembered ? " · credenciales recordadas" : ""}
       </span>
       {remembered ? (
-        <button disabled={busy} onClick={() => void run(() => reauthenticate(tab.serviceId, env.id))} style={{ alignSelf: "flex-start", fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "6px 13px", borderRadius: "var(--radius-control)", border: "none", cursor: busy ? "default" : "pointer", background: "var(--accent)", color: "var(--bg-app)", opacity: busy ? 0.6 : 1 }}>
+        <Button
+          variant="primary"
+          disabled={busy}
+          onClick={() => void run(() => reauthenticate(tab.serviceId, env.id))}
+          style={{ alignSelf: "flex-start", padding: "6px 13px" }}
+        >
           {busy ? "Reautenticando…" : "Reautenticar"}
-        </button>
+        </Button>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <input value={user} onChange={(e) => setUser(e.target.value)} placeholder="usuario" style={inputStyle} />
-          <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="clave" style={inputStyle} />
-          <button disabled={busy || user.trim() === "" || pass === ""} onClick={() => void run(() => authenticate(tab.serviceId, env.id, user.trim(), pass, false))} style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "6px 13px", borderRadius: "var(--radius-control)", border: "none", cursor: busy || user.trim() === "" || pass === "" ? "default" : "pointer", background: "var(--accent)", color: "var(--bg-app)", opacity: busy || user.trim() === "" || pass === "" ? 0.5 : 1 }}>
+          <Input value={user} onChange={setUser} placeholder="usuario" style={{ width: 110 }} />
+          <Input type="password" value={pass} onChange={setPass} placeholder="clave" style={{ width: 110 }} />
+          <Button
+            variant="primary"
+            disabled={busy || user.trim() === "" || pass === ""}
+            onClick={() => void run(() => authenticate(tab.serviceId, env.id, user.trim(), pass, false))}
+            style={{ padding: "6px 13px" }}
+          >
             Autenticar
-          </button>
+          </Button>
         </div>
       )}
       {err && <span className="mono" style={{ fontSize: 11, color: "var(--status-5xx)" }}>{err}</span>}

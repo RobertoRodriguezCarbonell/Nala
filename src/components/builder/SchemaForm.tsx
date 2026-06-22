@@ -1,5 +1,7 @@
 import type { Schema } from "../../types/openapi";
 import { defaultForSchema, primaryType, typeHint } from "../../lib/schema";
+import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
 
 /**
  * Formulario generado desde el esquema normalizado. Recorre el `Schema` y mapea
@@ -118,16 +120,16 @@ function Control({
 
   if (schema.enumValues && schema.enumValues.length) {
     return (
-      <select
-        style={{ ...inputStyle, cursor: "pointer" }}
+      <Select
         value={value == null ? "" : String(value)}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(v) => onChange(v)}
+        style={{ width: "100%", padding: "7px 10px", fontSize: "var(--text-sm)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)" }}
       >
         <option value="">—</option>
         {schema.enumValues.map((ev) => (
           <option key={String(ev)} value={String(ev)}>{String(ev)}</option>
         ))}
-      </select>
+      </Select>
     );
   }
 
@@ -168,26 +170,23 @@ function Control({
 
   if (t === "integer" || t === "number") {
     return (
-      <input
+      <Input
         type="number"
-        style={inputStyle}
-        value={value === "" || value == null ? "" : Number(value)}
+        value={value === "" || value == null ? "" : String(Number(value))}
         min={schema.minimum}
         max={schema.maximum}
-        onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
         placeholder={schema.example != null ? String(schema.example) : ""}
+        onChange={(v) => onChange(v === "" ? "" : Number(v))}
       />
     );
   }
 
-  const inputType = schema.format === "password" ? "password" : "text";
   return (
-    <input
-      type={inputType}
-      style={inputStyle}
+    <Input
+      type={schema.format === "password" ? "password" : "text"}
       value={value == null ? "" : String(value)}
-      onChange={(e) => onChange(e.target.value)}
       placeholder={schema.example != null ? String(schema.example) : schema.format ?? ""}
+      onChange={(v) => onChange(v)}
     />
   );
 }
