@@ -4,11 +4,9 @@ import { useServicesStore } from "../../store/servicesStore";
 import { useConfirmStore } from "../../store/confirmStore";
 import { listVariables, sendRequest } from "../../lib/tauri";
 import { buildVarMap } from "../../lib/interpolate";
-import { buildHttpRequest, matchesExpected } from "../../lib/request";
+import { buildHttpRequest, matchesExpected, SMOKE_STATUS_OPTIONS } from "../../lib/request";
 import type { RequestDraft } from "../../lib/request";
 import { methodColor } from "../MethodBadge";
-
-const STATUS_OPTIONS = ["2xx", "200", "201", "202", "204", "3xx", "4xx", "5xx"];
 
 interface SmokeResult {
   id: number;
@@ -119,7 +117,7 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
                 className="mono"
                 style={{ fontSize: 11, background: "var(--bg-input)", color: "var(--text-secondary)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "3px 5px" }}
               >
-                {STATUS_OPTIONS.map((s) => (
+                {SMOKE_STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
