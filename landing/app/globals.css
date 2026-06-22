@@ -51,6 +51,50 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Haz de luz que recorre el borde (gradiente cónico giratorio enmascarado). */
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.border-beam {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--beam-width, 1.5px);
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0deg,
+    transparent 300deg,
+    var(--beam-from, #4d8bf0) 332deg,
+    var(--beam-to, #4f46e5) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: beam-spin var(--beam-duration, 7s) linear infinite;
+  animation-delay: var(--beam-delay, 0s);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .border-beam {
+    animation: none;
+  }
+}
+
+@keyframes beam-spin {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
 /* Resplandor radial reutilizable para fondos de sección. */
 .glow {
   background:

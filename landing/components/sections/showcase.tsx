@@ -34,7 +34,7 @@ export function Showcase() {
               <span className="h-2.5 w-2.5 rounded-full bg-border-strong" /> cliente.ts
             </div>
             <pre className="overflow-x-auto p-4 font-mono text-[12px] leading-relaxed text-fg-muted">{CLIENT_TS}</pre>
-            <BorderBeam size={90} duration={8} delay={2} />
+            <BorderBeam duration={8} delay={-3} />
           </div>
         </Reveal>
       </div>

@@ -169,7 +169,7 @@ export function AppMockup() {
   return (
     <div ref={ref}>
       <div className="relative flex h-[452px] flex-col overflow-hidden rounded-xl border border-border-strong bg-bg text-xs shadow-2xl shadow-black/50">
-        <BorderBeam size={120} duration={9} />
+        <BorderBeam duration={9} />
         {/* Titlebar */}
         <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5">
           <span className="h-3 w-3 rounded-full bg-delete/80" />
