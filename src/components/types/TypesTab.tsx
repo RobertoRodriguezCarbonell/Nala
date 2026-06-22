@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { generateTypes, exportTypes } from "../../lib/tauri";
 import { EmptyState } from "../ui/EmptyState";
+import { Button } from "../ui/Button";
 
 /**
  * Pestaña "Tipos TS": genera las interfaces TypeScript de los modelos del
@@ -70,8 +71,8 @@ export function TypesTab({ serviceId }: { serviceId: number }) {
       <div style={{ height: 36, flex: "none", display: "flex", alignItems: "center", gap: 8, padding: "0 13px", borderBottom: "0.5px solid var(--border)" }}>
         <span className="mono" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{lines.length} líneas</span>
         <div style={{ flex: 1 }} />
-        <ToolBtn label={copied ? "Copiado ✓" : "Copiar"} color={copied ? "var(--status-2xx)" : undefined} onClick={() => void onCopy()} />
-        <ToolBtn label="Guardar…" onClick={() => void onSave()} />
+        <Button variant="secondary" onClick={() => void onCopy()} style={copied ? { color: "var(--status-2xx)" } : undefined}>{copied ? "Copiado ✓" : "Copiar"}</Button>
+        <Button variant="secondary" onClick={() => void onSave()}>Guardar…</Button>
       </div>
 
       <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
@@ -88,14 +89,4 @@ export function TypesTab({ serviceId }: { serviceId: number }) {
   );
 }
 
-function ToolBtn({ label, color, onClick }: { label: string; color?: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{ fontFamily: "var(--font-mono)", fontSize: 11, padding: "4px 10px", borderRadius: "var(--radius-control)", border: "0.5px solid var(--border-control)", background: "var(--bg-input)", color: color ?? "var(--text-secondary)", cursor: "pointer" }}
-    >
-      {label}
-    </button>
-  );
-}
 

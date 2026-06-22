@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import { useServicesStore } from "../../store/servicesStore";
 import { EmptyState } from "../ui/EmptyState";
+import { Button } from "../ui/Button";
 import { methodColor } from "../MethodBadge";
 import { RowsEditor } from "./RowsEditor";
 import { SchemaForm } from "./SchemaForm";
@@ -47,24 +48,15 @@ export function RequestBuilder() {
           <span style={{ color: "var(--text-secondary)" }}>{renderPath(tab.path, st.pathParams)}</span>
           <span style={{ color: "var(--text-faint)" }}>{renderQuery(st.query)}</span>
         </div>
-        <button
-          onClick={() => setSaveOpen(true)}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "8px 14px", cursor: "pointer", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", fontSize: 12.5 }}
-        >
-          Guardar
-        </button>
-        <button
-          onClick={() => void send(tab.id)}
-          disabled={st.sending}
-          style={{ display: "flex", alignItems: "center", gap: 7, background: "var(--accent)", border: "none", borderRadius: "var(--radius-control)", padding: "8px 16px", cursor: st.sending ? "default" : "pointer", color: "var(--bg-app)", opacity: st.sending ? 0.7 : 1 }}
-        >
+        <Button variant="secondary" onClick={() => setSaveOpen(true)}>Guardar</Button>
+        <Button variant="primary" onClick={() => void send(tab.id)} disabled={st.sending}>
           {st.sending ? (
             <span style={{ width: 12, height: 12, border: "2px solid rgba(10,10,11,0.3)", borderTopColor: "var(--bg-app)", borderRadius: "50%", animation: "nala-spin 0.7s linear infinite" }} />
           ) : (
             <svg width="12" height="12" viewBox="0 0 14 14"><path d="M2.5 2L12 7L2.5 12V2Z" fill="var(--bg-app)" /></svg>
           )}
-          <span style={{ fontSize: 12.5, fontWeight: 600 }}>{st.sending ? "Enviando…" : "Enviar"}</span>
-        </button>
+          <span style={{ fontWeight: 600 }}>{st.sending ? "Enviando…" : "Enviar"}</span>
+        </Button>
       </div>
 
       {/* Pestañas del constructor */}
