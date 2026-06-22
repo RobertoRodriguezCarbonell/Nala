@@ -117,6 +117,8 @@ pub struct AuthContext {
 pub struct RequestMeta {
     pub service_id: i64,
     pub environment_id: Option<i64>,
+    #[serde(default)]
+    pub skip_history: bool,
 }
 
 /// Petición HTTP ya resuelta (URL e interpolación hechas en el frontend).
@@ -182,6 +184,37 @@ pub struct HistoryEntry {
     pub response_body: String,
     pub error: Option<String>,
     pub created_at: String,
+}
+
+/// Petición guardada: snapshot de los inputs de un constructor (draft opaco) +
+/// flags de smoke. Se ejecuta contra el entorno activo.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedRequest {
+    pub id: i64,
+    pub service_id: i64,
+    pub name: String,
+    pub method: String,
+    pub path: String,
+    pub operation_id: Option<String>,
+    pub draft_json: String,
+    pub is_smoke: bool,
+    pub expected_status: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedRequestInput {
+    pub service_id: i64,
+    pub name: String,
+    pub method: String,
+    pub path: String,
+    pub operation_id: Option<String>,
+    pub draft_json: String,
+    pub is_smoke: bool,
+    pub expected_status: String,
 }
 
 /// Entrada de historial lista para insertar (sin id/created_at). Las cabeceras

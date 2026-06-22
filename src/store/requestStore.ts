@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { listVariables, sendRequest } from "../lib/tauri";
 import { buildVarMap, interpolate } from "../lib/interpolate";
+import { buildHttpRequest, draftFromTab } from "../lib/request";
 import { defaultForSchema, preferRawJson } from "../lib/schema";
 import type { Operation } from "../types/openapi";
 import type { HttpResponse } from "../types/http";
@@ -16,7 +17,7 @@ export interface Row {
 
 export type BuilderTab = "params" | "body" | "headers" | "auth";
 
-interface TabState {
+export interface TabState {
   pathParams: Record<string, string>;
   query: Row[];
   headers: Row[];
@@ -50,24 +51,6 @@ const newRow = (name = "", value = "", enabled = true): Row => ({
 
 const pathParamNames = (path: string): string[] =>
   [...path.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
-
-/** Elimina campos vacíos ('' / null / [] / {}) para no enviar opcionales en blanco. */
-function pruneEmpty(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    const arr = value.map(pruneEmpty).filter((v) => v !== undefined);
-    return arr.length ? arr : undefined;
-  }
-  if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      const pv = pruneEmpty(v);
-      if (pv !== undefined) out[k] = pv;
-    }
-    return Object.keys(out).length ? out : undefined;
-  }
-  if (value === "" || value === null) return undefined;
-  return value;
-}
 
 function initTab(op: Operation): TabState {
   const query = (op.parameters ?? [])
@@ -209,41 +192,20 @@ export const useRequestStore = create<RequestState>((set, get) => ({
       return;
     }
 
-    // URL: sustituye path params, interpola, añade query string.
-    const path = tab.path.replace(/\{([^}]+)\}/g, (_, n) =>
-      encodeURIComponent(interpolate(st.pathParams[n] ?? "", map))
-    );
-    const qs = st.query
-      .filter((r) => r.enabled && r.name.trim() !== "")
-      .map((r) => `${encodeURIComponent(interpolate(r.name, map))}=${encodeURIComponent(interpolate(r.value, map))}`)
-      .join("&");
-    const url = `${interpolate(baseUrl, map)}${path}${qs ? `?${qs}` : ""}`;
-
-    const headers = st.headers
-      .filter((r) => r.enabled && r.name.trim() !== "")
-      .map((r) => ({ name: interpolate(r.name, map), value: interpolate(r.value, map) }));
-
-    let body: string | null = null;
-    if (st.hasBody) {
-      body =
-        st.bodyMode === "json"
-          ? interpolate(st.bodyJson, map)
-          : interpolate(JSON.stringify(pruneEmpty(st.bodyForm) ?? {}), map);
-      if (!headers.some((h) => h.name.toLowerCase() === "content-type")) {
-        headers.push({ name: "Content-Type", value: "application/json" });
-      }
-    }
+    // Construcción de la petición (compartida con el runner de smoke).
+    const input = buildHttpRequest({
+      method: tab.method,
+      path: tab.path,
+      draft: draftFromTab(st),
+      baseUrl,
+      varMap: map,
+      auth: env?.id != null ? { serviceId: tab.serviceId, environmentId: env.id } : null,
+      meta: { serviceId: tab.serviceId, environmentId: env?.id ?? null },
+    });
 
     patch(id, { sending: true, error: null, reauthNeeded: false });
     try {
-      const response = await sendRequest({
-        method: tab.method,
-        url,
-        headers,
-        body,
-        auth: env?.id != null ? { serviceId: tab.serviceId, environmentId: env.id } : null,
-        meta: { serviceId: tab.serviceId, environmentId: env?.id ?? null },
-      });
+      const response = await sendRequest(input);
       patch(id, { sending: false, response, responseTab: "body" });
       if (response.status === 401) {
         await useAuthStore.getState().load(tab.serviceId, env?.id);

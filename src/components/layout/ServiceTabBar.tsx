@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useUiStore } from "../../store/uiStore";
 
-type TabKey = "endpoints" | "diff" | "types" | "history";
+type TabKey = "endpoints" | "diff" | "types" | "smoke" | "history";
 
 const TABS: { key: TabKey; label: string; desc: string }[] = [
   {
@@ -18,6 +18,11 @@ const TABS: { key: TabKey; label: string; desc: string }[] = [
     key: "types",
     label: "Tipos TS",
     desc: "Genera las interfaces TypeScript de los modelos del servicio desde su esquema; puedes copiarlas o guardarlas a un archivo.",
+  },
+  {
+    key: "smoke",
+    label: "Smoke",
+    desc: "Guarda peticiones y ejecútalas en lote contra el entorno activo; comprueba solo el status esperado (verde/rojo).",
   },
   {
     key: "history",

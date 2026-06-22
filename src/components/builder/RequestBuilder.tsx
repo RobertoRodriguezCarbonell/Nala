@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import { useServicesStore } from "../../store/servicesStore";
 import { methodColor } from "../MethodBadge";
 import { RowsEditor } from "./RowsEditor";
 import { SchemaForm } from "./SchemaForm";
 import { AuthPanel } from "./AuthPanel";
+import { SaveRequestDialog } from "./SaveRequestDialog";
 import type { BuilderTab } from "../../store/requestStore";
 import type { Operation } from "../../types/openapi";
 
@@ -13,6 +15,7 @@ export function RequestBuilder() {
 
   const tab = tabs.find((t) => t.id === activeTabId) ?? null;
   const st = activeTabId ? tabStates[activeTabId] : null;
+  const [saveOpen, setSaveOpen] = useState(false);
   if (!tab || !st) {
     return <Centered text="Selecciona un endpoint en el árbol" />;
   }
@@ -43,6 +46,12 @@ export function RequestBuilder() {
           <span style={{ color: "var(--text-secondary)" }}>{renderPath(tab.path, st.pathParams)}</span>
           <span style={{ color: "var(--text-faint)" }}>{renderQuery(st.query)}</span>
         </div>
+        <button
+          onClick={() => setSaveOpen(true)}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "8px 14px", cursor: "pointer", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", fontSize: 12.5 }}
+        >
+          Guardar
+        </button>
         <button
           onClick={() => void send(tab.id)}
           disabled={st.sending}
@@ -120,6 +129,14 @@ export function RequestBuilder() {
 
         {st.builderTab === "auth" && <AuthPanel serviceId={tab.serviceId} />}
       </div>
+      {saveOpen && (
+        <SaveRequestDialog
+          tab={tab}
+          st={st}
+          operationId={op?.operationId}
+          onClose={() => setSaveOpen(false)}
+        />
+      )}
     </div>
   );
 }

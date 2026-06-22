@@ -13,6 +13,7 @@ const MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0004_auth.sql"),
     include_str!("../migrations/0005_auth_login.sql"),
     include_str!("../migrations/0006_history.sql"),
+    include_str!("../migrations/0007_saved_requests.sql"),
 ];
 
 /// Abre (o crea) la base de datos SQLite y aplica las migraciones pendientes.

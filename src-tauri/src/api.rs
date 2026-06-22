@@ -7,7 +7,8 @@ use tauri_plugin_dialog::DialogExt;
 use crate::error::AppError;
 use crate::models::{
     AuthStatus, Environment, EnvironmentInput, Header, HistoryEntry, HttpRequestInput, HttpResponse,
-    ImportResult, Service, ServiceInput, SnapshotMeta, Variable, VariableInput,
+    ImportResult, SavedRequest, SavedRequestInput, Service, ServiceInput, SnapshotMeta, Variable,
+    VariableInput,
 };
 use crate::openapi::{self, NormalizedSpec};
 use crate::AppState;
@@ -434,7 +435,11 @@ pub async fn send_request(
 
     // Snapshot redactado del request final (antes de mover `input` al envío).
     let meta = input.meta.clone();
-    let snapshot = meta.as_ref().map(|_| history::redact_request(&input, &injection));
+    // Si la petición pide saltar historial (p. ej. smoke), no se compone el snapshot.
+    let snapshot = meta
+        .as_ref()
+        .filter(|m| !m.skip_history)
+        .map(|_| history::redact_request(&input, &injection));
 
     let result = http::send_request(input).await;
 
@@ -577,4 +582,42 @@ pub fn diff_snapshots(
         &from_spec,
         &to_spec,
     ))
+}
+
+// ---------- Peticiones guardadas / smoke ----------
+
+#[tauri::command]
+pub fn create_saved_request(
+    state: State<AppState>,
+    input: SavedRequestInput,
+) -> Result<SavedRequest, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::create_saved_request(&conn, &input)
+}
+
+#[tauri::command]
+pub fn list_saved_requests(
+    state: State<AppState>,
+    service_id: i64,
+) -> Result<Vec<SavedRequest>, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::list_saved_requests(&conn, service_id)
+}
+
+#[tauri::command]
+pub fn update_saved_request(
+    state: State<AppState>,
+    id: i64,
+    name: String,
+    is_smoke: bool,
+    expected_status: String,
+) -> Result<SavedRequest, AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::update_saved_request(&conn, id, &name, is_smoke, &expected_status)
+}
+
+#[tauri::command]
+pub fn delete_saved_request(state: State<AppState>, id: i64) -> Result<(), AppError> {
+    let conn = state.db.lock().expect("db lock");
+    store::delete_saved_request(&conn, id)
 }

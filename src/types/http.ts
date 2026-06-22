@@ -27,6 +27,7 @@ export interface AuthContext {
 export interface RequestMeta {
   serviceId: number;
   environmentId?: number | null;
+  skipHistory?: boolean;
 }
 
 export interface HistoryEntry {
