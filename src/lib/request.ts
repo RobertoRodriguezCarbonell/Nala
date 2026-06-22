@@ -5,6 +5,9 @@ import { interpolate } from "./interpolate";
 import type { Row, TabState } from "../store/requestStore";
 import type { AuthContext, HttpRequestInput, RequestMeta } from "../types/http";
 
+/** Opciones de status esperado para una petición smoke (familia o código exacto). */
+export const SMOKE_STATUS_OPTIONS = ["2xx", "200", "201", "202", "204", "3xx", "4xx", "5xx"];
+
 /** Subconjunto serializable de un TabState: lo que define una petición guardada. */
 export interface RequestDraft {
   pathParams: Record<string, string>;
@@ -41,7 +44,9 @@ export function draftFromTab(st: TabState): RequestDraft {
     query: st.query.map((r) => ({ ...r })),
     headers: st.headers.map((r) => ({ ...r })),
     bodyMode: st.bodyMode,
-    bodyForm: st.bodyForm,
+    // Clon profundo: el draft es un snapshot inmutable, no debe compartir
+    // referencia con el bodyForm vivo del tab.
+    bodyForm: st.bodyForm == null ? st.bodyForm : (JSON.parse(JSON.stringify(st.bodyForm)) as unknown),
     bodyJson: st.bodyJson,
     hasBody: st.hasBody,
   };

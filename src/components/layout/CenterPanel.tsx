@@ -63,7 +63,7 @@ export function CenterPanel() {
               <SmokeTab serviceId={activeServiceId} />
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para ver el smoke de su servicio.</span>
+                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint del servicio para ver y ejecutar su smoke.</span>
               </div>
             )
           ) : (
@@ -75,9 +75,11 @@ export function CenterPanel() {
         </>
       )}
 
-      <div style={{ flex: "none", borderTop: "0.5px solid var(--border-subtle)", padding: "7px 12px", display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ flex: "none", borderTop: "0.5px solid var(--border-subtle)", padding: "7px 14px", display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap" }}>
         <span className="mono" style={{ fontSize: 10.5, color: "var(--text-disabled)" }}>{booting ? "arrancando…" : `apertura nº ${launchCount}`}</span>
+        <span className="mono" style={{ fontSize: 10.5, color: "var(--border)" }}>·</span>
         <span className="mono" style={{ fontSize: 10.5, color: "var(--text-disabled)" }}>sqlite ✓</span>
+        <span className="mono" style={{ fontSize: 10.5, color: "var(--border)" }}>·</span>
         <span className="mono" style={{ fontSize: 10.5, color: keyReady ? "var(--status-2xx)" : "var(--text-disabled)" }}>keychain {keyReady ? "✓" : "—"}</span>
       </div>
     </div>

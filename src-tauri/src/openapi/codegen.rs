@@ -274,7 +274,13 @@ fn is_meta_only(m: &Value) -> bool {
 }
 
 fn is_null_schema(v: &Value) -> bool {
-    matches!(v.get("type").and_then(|t| t.as_str()), Some("null"))
+    match v.get("type") {
+        // 3.0: type: "null"
+        Some(Value::String(t)) => t == "null",
+        // 3.1: type: ["null"] (solo null; ["string","null"] no es un esquema null).
+        Some(Value::Array(a)) => !a.is_empty() && a.iter().all(|x| x.as_str() == Some("null")),
+        _ => false,
+    }
 }
 
 /// `true` si una expresión necesita paréntesis al envolverla en `[]`.
@@ -386,5 +392,24 @@ mod tests {
         let spec = json!({ "openapi": "3.1.0", "info": { "title": "Vacía", "version": "1" } });
         let ts = generate_typescript(&spec);
         assert!(ts.contains("// (sin modelos)"));
+    }
+
+    #[test]
+    fn anyof_con_null_en_forma_array_3_1() {
+        // OpenAPI 3.1 puede marcar el null como `type: ["null"]` dentro de un anyOf.
+        let spec = json!({
+            "openapi": "3.1.0",
+            "info": { "title": "X", "version": "1" },
+            "components": { "schemas": {
+                "M": {
+                    "type": "object",
+                    "properties": {
+                        "nota": { "anyOf": [{ "type": "string" }, { "type": ["null"] }] }
+                    }
+                }
+            }}
+        });
+        let ts = generate_typescript(&spec);
+        assert!(ts.contains("nota?: string | null;"));
     }
 }

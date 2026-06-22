@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useSavedRequestsStore } from "../../store/savedRequestsStore";
-import { draftFromTab } from "../../lib/request";
+import { draftFromTab, SMOKE_STATUS_OPTIONS } from "../../lib/request";
 import type { OpenTab, TabState } from "../../store/requestStore";
-
-const STATUS_OPTIONS = ["2xx", "200", "201", "202", "204", "3xx", "4xx", "5xx"];
 
 /** Diálogo para guardar la petición del tab activo (opcionalmente como smoke). */
 export function SaveRequestDialog({
@@ -22,10 +20,12 @@ export function SaveRequestDialog({
   const [isSmoke, setIsSmoke] = useState(true);
   const [expected, setExpected] = useState("2xx");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const onSave = async () => {
     if (saving) return;
     setSaving(true);
+    setError(null);
     try {
       await createSaved({
         serviceId: tab.serviceId,
@@ -38,8 +38,9 @@ export function SaveRequestDialog({
         expectedStatus: expected,
       });
       onClose();
-    } catch {
+    } catch (e) {
       setSaving(false);
+      setError(typeof e === "string" ? e : "No se pudo guardar la petición.");
     }
   };
 
@@ -78,11 +79,15 @@ export function SaveRequestDialog({
             className="mono"
             style={{ fontSize: 11.5, background: "var(--bg-input)", color: "var(--text-secondary)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "4px 6px" }}
           >
-            {STATUS_OPTIONS.map((s) => (
+            {SMOKE_STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </label>
+
+        {error && (
+          <span className="mono" style={{ fontSize: 11, color: "var(--status-5xx)" }}>{error}</span>
+        )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 4 }}>
           <button
