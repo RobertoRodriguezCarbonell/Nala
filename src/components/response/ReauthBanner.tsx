@@ -48,7 +48,7 @@ export function ReauthBanner() {
 
   return (
     <div style={{ flex: "none", display: "flex", flexDirection: "column", gap: 8, padding: "10px 12px", borderBottom: "0.5px solid var(--border-subtle)", background: "rgba(210,153,34,0.08)" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--status-4xx)" }}>
+      <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--status-4xx)" }}>
         Sesión caducada (401){remembered ? " · credenciales recordadas" : ""}
       </span>
       {remembered ? (
@@ -74,7 +74,7 @@ export function ReauthBanner() {
           </Button>
         </div>
       )}
-      {err && <span className="mono" style={{ fontSize: 11, color: "var(--status-5xx)" }}>{err}</span>}
+      {err && <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--status-5xx)" }}>{err}</span>}
     </div>
   );
 }
