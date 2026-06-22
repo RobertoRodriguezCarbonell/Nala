@@ -18,14 +18,14 @@ export function TabBar({
   onSelect: (key: string) => void;
 }) {
   return (
-    <div style={{ flex: "none", display: "flex", alignItems: "stretch", height: 34, padding: "0 12px", gap: "var(--space-1)", borderBottom: "0.5px solid var(--border-subtle)" }}>
+    <div style={{ flex: "none", display: "flex", alignItems: "stretch", height: 34, padding: "0 12px", gap: "var(--space-1)", borderBottom: "0.5px solid var(--border-subtle)", overflowX: "auto", overflowY: "hidden" }}>
       {tabs.map((t) => {
         const isActive = active === t.key;
         return (
           <div
             key={t.key}
             onClick={() => onSelect(t.key)}
-            style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", padding: "0 10px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", cursor: "pointer", color: isActive ? "var(--text-primary)" : "var(--text-faint)", borderBottom: `2px solid ${isActive ? "var(--accent)" : "transparent"}` }}
+            style={{ flex: "none", display: "flex", alignItems: "center", gap: "var(--space-2)", padding: "0 10px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", whiteSpace: "nowrap", cursor: "pointer", color: isActive ? "var(--text-primary)" : "var(--text-faint)", borderBottom: `2px solid ${isActive ? "var(--accent)" : "transparent"}` }}
           >
             {t.label}
             {t.badge != null && (
