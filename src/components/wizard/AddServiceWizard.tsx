@@ -2,40 +2,10 @@ import { useState } from "react";
 import { useServicesStore } from "../../store/servicesStore";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Field } from "../ui/Field";
 
 type Step = "form" | "importing" | "done" | "error";
-
-const field: React.CSSProperties = {
-  background: "var(--bg-input)",
-  border: "0.5px solid var(--border-input)",
-  borderRadius: "var(--radius-input)",
-  padding: "8px 10px",
-  fontFamily: "var(--font-mono)",
-  fontSize: 12.5,
-  color: "var(--text-primary)",
-  outline: "none",
-  width: "100%",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 11,
-  color: "var(--text-muted)",
-  fontWeight: 500,
-  marginBottom: 5,
-  display: "block",
-};
-
-function Labeled({ children, text, hint }: { children: React.ReactNode; text: string; hint?: string }) {
-  return (
-    <div>
-      <label style={labelStyle}>
-        {text}
-        {hint && <span style={{ color: "var(--text-disabled)", fontWeight: 400 }}> · {hint}</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
 
 export function AddServiceWizard() {
   const closeWizard = useServicesStore((s) => s.closeWizard);
@@ -96,26 +66,26 @@ export function AddServiceWizard() {
       {/* Contenido del paso activo */}
       {step === "form" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-          <Labeled text="Nombre del servicio">
-            <input style={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="Calclon API" autoFocus />
-          </Labeled>
-          <Labeled text="Grupo / proyecto" hint="opcional">
-            <input style={field} value={group} onChange={(e) => setGroup(e.target.value)} placeholder="Backends internos" />
-          </Labeled>
-          <Labeled text="Ruta del spec">
-            <input style={field} value={specPath} onChange={(e) => setSpecPath(e.target.value)} />
-          </Labeled>
+          <Field label="Nombre del servicio">
+            <Input value={name} onChange={setName} placeholder="Calclon API" autoFocus />
+          </Field>
+          <Field label="Grupo / proyecto" hint="opcional">
+            <Input value={group} onChange={setGroup} placeholder="Backends internos" />
+          </Field>
+          <Field label="Ruta del spec">
+            <Input value={specPath} onChange={setSpecPath} />
+          </Field>
           <div style={{ height: 0.5, background: "var(--border-subtle)", margin: "2px 0" }} />
           <div style={{ display: "flex", gap: 10 }}>
             <div style={{ width: 130 }}>
-              <Labeled text="Primer entorno">
-                <input style={field} value={envName} onChange={(e) => setEnvName(e.target.value)} />
-              </Labeled>
+              <Field label="Primer entorno">
+                <Input value={envName} onChange={setEnvName} />
+              </Field>
             </div>
             <div style={{ flex: 1 }}>
-              <Labeled text="Base URL">
-                <input style={field} value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="http://localhost:8000" />
-              </Labeled>
+              <Field label="Base URL">
+                <Input value={baseUrl} onChange={setBaseUrl} placeholder="http://localhost:8000" />
+              </Field>
             </div>
           </div>
         </div>
