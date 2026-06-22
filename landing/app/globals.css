@@ -61,15 +61,17 @@ body {
 .border-beam {
   position: absolute;
   inset: 0;
+  z-index: 20;
   border-radius: inherit;
-  padding: var(--beam-width, 1.5px);
+  padding: var(--beam-width, 2px);
   background: conic-gradient(
     from var(--beam-angle),
     transparent 0deg,
-    transparent 300deg,
-    var(--beam-from, #4d8bf0) 332deg,
-    var(--beam-to, #4f46e5) 360deg
+    transparent 235deg,
+    var(--beam-from, #4d8bf0) 320deg,
+    var(--beam-to, #5b96f2) 360deg
   );
+  filter: drop-shadow(0 0 5px rgba(91, 150, 242, 0.55));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
