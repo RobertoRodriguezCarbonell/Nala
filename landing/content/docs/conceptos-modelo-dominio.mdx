@@ -71,7 +71,7 @@ Los ámbitos disponibles son:
 - **Servicio** — disponible en todos los entornos de ese servicio.
 - **Entorno** — disponible solo en ese entorno concreto.
 
-Cuando Nala resuelve una plantilla como `{{token}}`, busca primero en el entorno activo, luego en el servicio, y finalmente en el ámbito global. Las variables pueden marcarse como **secreto**, lo que las cifra en disco y las redacta en la UI.
+Cuando Nala resuelve una plantilla como `{{token}}`, busca primero en el entorno activo, luego en el servicio, y finalmente en el ámbito global. Las variables pueden marcarse como **secreto**, lo que redacta su valor en la UI (se muestra `••••`); el valor se sigue guardando en texto claro en disco, sin cifrar.
 
 Consulta [Entornos y variables](/docs/guias-entornos-variables) para el CRUD completo de variables y la referencia de interpolación.
 
