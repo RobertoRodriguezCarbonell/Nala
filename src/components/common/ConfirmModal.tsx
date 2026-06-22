@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useConfirmStore } from "../../store/confirmStore";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 
 export function ConfirmModal() {
   const request = useConfirmStore((s) => s.request);
@@ -44,12 +45,11 @@ export function ConfirmModal() {
           <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>
             Escribe «{request.requireText}» para confirmar
           </span>
-          <input
-            autoFocus
+          <Input
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={setText}
+            autoFocus
             onKeyDown={(e) => { if (e.key === "Enter" && matched && !busy) void accept(); }}
-            style={{ background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)", padding: "8px 10px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--text-primary)", outline: "none", width: "100%" }}
           />
         </div>
       )}
