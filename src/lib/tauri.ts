@@ -12,6 +12,7 @@ import type {
 } from "../types/http";
 import type { SavedRequest, SavedRequestInput } from "../types/saved";
 import type { Discovered } from "../types/discover";
+import type { Sequence, SequenceInput } from "../types/sequence";
 
 /**
  * Capa fina sobre los comandos de Tauri (backend Rust).
@@ -265,4 +266,22 @@ export function updateSavedRequest(
 
 export function deleteSavedRequest(id: number): Promise<void> {
   return invoke<void>("delete_saved_request", { id });
+}
+
+// ---------- Secuencias ----------
+
+export function createSequence(input: SequenceInput): Promise<Sequence> {
+  return invoke<Sequence>("create_sequence", { input });
+}
+
+export function listSequences(serviceId: number): Promise<Sequence[]> {
+  return invoke<Sequence[]>("list_sequences", { serviceId });
+}
+
+export function updateSequence(id: number, name: string, stepsJson: string): Promise<Sequence> {
+  return invoke<Sequence>("update_sequence", { id, name, stepsJson });
+}
+
+export function deleteSequence(id: number): Promise<void> {
+  return invoke<void>("delete_sequence", { id });
 }
