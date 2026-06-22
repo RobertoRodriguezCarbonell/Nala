@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0b;
+  --color-raised: #111316;
+  --color-card: #0d0e10;
+  --color-border: #1b1e23;
+  --color-border-strong: #242830;
+  --color-fg: #e6e7ea;
+  --color-fg-muted: #c4c8cf;
+  --color-fg-faint: #8a8f98;
+  --color-fg-disabled: #565f6b;
+  --color-brand: #4f46e5;
+  --color-accent: #4d8bf0;
+  --color-accent-hover: #5b96f2;
+  --color-get: #3fb950;
+  --color-post: #d29922;
+  --color-put: #4d8bf0;
+  --color-patch: #a371f7;
+  --color-delete: #f85149;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Resplandor radial reutilizable para fondos de sección. */
+.glow {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(79, 70, 229, 0.18), transparent 70%),
+    radial-gradient(40% 40% at 80% 10%, rgba(77, 139, 240, 0.12), transparent 70%);
+}
+
+/* Rejilla muy tenue de fondo. */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 75%);
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 75%);
+}
