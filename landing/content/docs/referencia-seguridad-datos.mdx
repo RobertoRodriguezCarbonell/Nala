@@ -28,14 +28,17 @@ Nala cifra únicamente los datos que, si quedaran expuestos, permitirían a algu
 | Secreto Bearer/API key (por entorno) | Sí — AES-256-GCM | El valor del token o la API key del entorno |
 | Token de login cacheado | Sí — AES-256-GCM | El token obtenido tras ejecutar el flujo de login |
 | Credenciales de login recordadas | Sí — AES-256-GCM | Solo si marcas «Recordar credenciales» en el entorno |
-| Variables marcadas como secreto | Sí — AES-256-GCM | Variables con el flag de secreto activado |
 | Metadatos de servicio | No | Nombre, grupo, color, ruta del spec |
 | Nombres y URLs de entorno | No | Nombre del entorno y base URL |
-| Variables normales | No | Variables sin el flag de secreto |
+| Variables (con o sin flag de secreto) | No | Todas las variables se guardan en texto claro; el flag de secreto solo redacta el valor en la UI como `••••` |
 | Snapshots de esquema | No | Copia del `openapi.json`; no contiene credenciales |
 | Borradores de peticiones guardadas | No | Params, body y headers de la petición |
 | Cabeceras de auth en historial | Redactadas | Se almacenan como `••••`, no cifradas sino eliminadas |
 | Resto del historial | No | URL, método, status, tiempo, body de request/response |
+
+<Callout type="warning">
+Marcar una variable como «Secreto» **solo oculta su valor en la lista** (muestra `••••`); el valor se sigue guardando en texto claro en la base de datos, sin cifrado. Si necesitas proteger un token o API key en reposo, utiliza el secreto de autenticación del entorno, que sí se cifra con AES-256-GCM. Consulta la guía [Autenticación](/docs/guias-autenticacion) para más detalles.
+</Callout>
 
 <Callout type="warning">
 Las cabeceras de autenticación del historial (`Authorization`, `X-API-Key` y equivalentes) **no se guardan en claro ni cifradas**: se reemplazan permanentemente por `••••` antes de escribirlas en disco. Esta redacción es irreversible. El valor real del token siempre está disponible en el panel **Auth** del constructor, nunca en el historial.
@@ -74,7 +77,7 @@ Las peticiones a tus APIs se realizan **desde el proceso Rust de Nala**, no desd
 
 ## Resumen del modelo de seguridad
 
-- **Datos en reposo**: SQLite local; solo los secretos cifrados con AES-256-GCM.
+- **Datos en reposo**: SQLite local; solo los secretos de auth cifrados con AES-256-GCM (tokens, API keys y credenciales recordadas). Las variables —incluyendo las marcadas como secreto— se guardan en texto claro.
 - **Clave de cifrado**: 32 bytes en Windows Credential Manager, nunca en disco.
 - **Datos en tránsito**: Las peticiones se hacen desde Rust con `reqwest`; los secretos no pasan por el webview.
 - **Historial**: Cabeceras de auth siempre redactadas, sin posibilidad de recuperarlas.

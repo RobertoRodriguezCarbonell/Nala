@@ -52,7 +52,7 @@ Para crear una variable:
 2. Introduce el **nombre** (sin llaves) y el **valor**.
 3. Activa el flag **Secreto** si el valor no debe mostrarse en texto claro.
 
-Las variables marcadas como secreto aparecen en la lista con el valor redactado como `••••`. Se guardan cifradas en disco; consulta [Seguridad y datos](/docs/referencia-seguridad-datos) para los detalles del cifrado.
+Las variables marcadas como secreto aparecen en la lista con el valor redactado como `••••`, pero el valor se guarda en **texto claro** en la base de datos (no cifrado). Si necesitas que un secreto esté cifrado en reposo, usa el secreto de autenticación del entorno en lugar de una variable; consulta la guía [Autenticación](/docs/guias-autenticacion). Para el modelo de datos completo, consulta [Seguridad y datos](/docs/referencia-seguridad-datos).
 
 ## Interpolación `{{var}}`
 

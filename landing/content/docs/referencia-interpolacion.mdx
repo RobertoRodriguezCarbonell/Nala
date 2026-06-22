@@ -65,11 +65,11 @@ El gestor de variables muestra siempre el recordatorio de precedencia en la cabe
 Cualquier variable puede marcarse como **Secreto** al crearla o editarla. Las variables secretas:
 
 - Aparecen en la lista del gestor con el valor redactado como `••••`.
-- Se guardan cifradas en disco (AES-256-GCM), igual que los tokens y credenciales de auth.
+- El valor se guarda en **texto claro** en la base de datos, sin cifrado. El flag de secreto solo redacta la visualización; no protege el valor en reposo.
 - Se interpolan normalmente en tiempo de envío —el valor real llega a la petición—, pero nunca se muestran en texto claro en la UI.
 
-<Callout type="info">
-Para el modelo de cifrado completo —qué se cifra, con qué algoritmo y dónde vive la clave— consulta [Seguridad y datos](/docs/referencia-seguridad-datos).
+<Callout type="warning">
+Si necesitas que un token o API key esté cifrado en disco, usa el secreto de autenticación del entorno (Bearer, API key o credenciales de login), que sí se cifra con AES-256-GCM. Consulta la guía [Autenticación](/docs/guias-autenticacion). Para el modelo de datos completo, consulta [Seguridad y datos](/docs/referencia-seguridad-datos).
 </Callout>
 
 ## Variables sin resolver
