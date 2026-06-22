@@ -41,9 +41,9 @@ export function RequestBuilder() {
       {/* Fila de URL */}
       <div style={{ flex: "none", padding: "11px 12px", borderBottom: "0.5px solid var(--border-subtle)", display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5, background: "var(--bg-input)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "6px 11px" }}>
-          <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: methodColor(tab.method) }}>{tab.method}</span>
+          <span className="mono" style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: methodColor(tab.method) }}>{tab.method}</span>
         </div>
-        <div className="mono" style={{ flex: 1, display: "flex", alignItems: "center", background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-control)", padding: "7px 11px", fontSize: 12.5, overflow: "hidden", whiteSpace: "nowrap" }}>
+        <div className="mono" style={{ flex: 1, display: "flex", alignItems: "center", background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-control)", padding: "7px 11px", fontSize: "var(--text-sm)", overflow: "hidden", whiteSpace: "nowrap" }}>
           <span style={{ color: "var(--accent)" }}>{"{{"}</span>
           <span style={{ color: "var(--accent-var)" }}>baseUrl</span>
           <span style={{ color: "var(--accent)" }}>{"}}"}</span>
@@ -70,7 +70,7 @@ export function RequestBuilder() {
 
       {/* Mensaje de error de validación / red */}
       {st.error && (
-        <div className="mono" style={{ flex: "none", fontSize: 11.5, color: "var(--status-5xx)", padding: "8px 12px", borderBottom: "0.5px solid var(--border-subtle)", background: "rgba(248,81,73,0.06)" }}>
+        <div className="mono" style={{ flex: "none", fontSize: "var(--text-xs)", color: "var(--status-5xx)", padding: "8px 12px", borderBottom: "0.5px solid var(--border-subtle)", background: "rgba(248,81,73,0.06)" }}>
           {st.error}
         </div>
       )}
@@ -81,11 +81,11 @@ export function RequestBuilder() {
           <div>
             {pathNames.length > 0 && (
               <div style={{ borderBottom: "0.5px solid var(--border-subtle)" }}>
-                <div className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)", padding: "8px 12px 4px", letterSpacing: "0.5px" }}>PATH</div>
+                <div className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-faint)", padding: "8px 12px 4px", letterSpacing: "0.5px" }}>PATH</div>
                 {pathNames.map((name) => (
                   <div key={name} style={{ display: "grid", gridTemplateColumns: "200px 1fr", alignItems: "center", borderTop: "0.5px solid var(--border-row)" }}>
                     <div style={{ padding: "8px 12px" }}>
-                      <span className="mono" style={{ fontSize: 12, color: "var(--text-secondary)" }}>{name}<span style={{ color: "var(--syntax-required)" }}> *</span></span>
+                      <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>{name}<span style={{ color: "var(--syntax-required)" }}> *</span></span>
                     </div>
                     <div style={{ padding: "6px 12px 6px 0" }}>
                       <input
@@ -93,14 +93,14 @@ export function RequestBuilder() {
                         value={st.pathParams[name]}
                         onChange={(e) => patch(tab.id, { pathParams: { ...st.pathParams, [name]: e.target.value } })}
                         placeholder={`{${name}}`}
-                        style={{ background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)", padding: "7px 10px", fontSize: 12, color: "var(--text-secondary)", outline: "none", width: "100%" }}
+                        style={{ background: "var(--bg-input)", border: "0.5px solid var(--border-input)", borderRadius: "var(--radius-input)", padding: "7px 10px", fontSize: "var(--text-sm)", color: "var(--text-secondary)", outline: "none", width: "100%" }}
                       />
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            <div className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)", padding: "8px 12px 0", letterSpacing: "0.5px" }}>QUERY</div>
+            <div className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-faint)", padding: "8px 12px 0", letterSpacing: "0.5px" }}>QUERY</div>
             <RowsEditor rows={st.query} onChange={(rows) => patch(tab.id, { query: rows })} />
           </div>
         )}
@@ -141,13 +141,13 @@ function BodySection({
   setBodyMode: ReturnType<typeof useRequestStore.getState>["setBodyMode"];
 }) {
   if (!st.hasBody || !op?.requestBody) {
-    return <div className="mono" style={{ fontSize: 12, color: "var(--text-faint)", padding: "18px 14px" }}>Esta operación no tiene cuerpo de petición.</div>;
+    return <div className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-faint)", padding: "18px 14px" }}>Esta operación no tiene cuerpo de petición.</div>;
   }
   const schema = op.requestBody.schema;
 
   const seg = (active: boolean): React.CSSProperties => ({
     fontFamily: "var(--font-mono)",
-    fontSize: 11.5,
+    fontSize: "var(--text-xs)",
     padding: "4px 11px",
     borderRadius: 4,
     cursor: "pointer",
@@ -159,8 +159,8 @@ function BodySection({
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="mono" style={{ fontSize: 12, color: "var(--text-muted)" }}>{op.requestBody.contentType}</span>
-          {schema.refName && <span className="mono" style={{ fontSize: 12, color: "var(--syntax-type)" }}>{schema.refName}</span>}
+          <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>{op.requestBody.contentType}</span>
+          {schema.refName && <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--syntax-type)" }}>{schema.refName}</span>}
         </div>
         <div style={{ display: "flex", background: "var(--bg-input)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: 2 }}>
           <div style={seg(st.bodyMode === "form")} onClick={() => setBodyMode(tabId, "form")}>Form</div>
