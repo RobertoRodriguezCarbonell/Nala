@@ -67,6 +67,8 @@ pub fn run() {
             api::clear_history,
             api::generate_types,
             api::export_types,
+            api::generate_client,
+            api::export_client,
             api::diff_snapshots,
             api::create_saved_request,
             api::list_saved_requests,
