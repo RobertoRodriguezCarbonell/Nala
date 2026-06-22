@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useSavedRequestsStore } from "../../store/savedRequestsStore";
 import { useServicesStore } from "../../store/servicesStore";
 import { useConfirmStore } from "../../store/confirmStore";
+import { EmptyState } from "../ui/EmptyState";
 import { listVariables, sendRequest } from "../../lib/tauri";
 import { buildVarMap } from "../../lib/interpolate";
 import { buildHttpRequest, matchesExpected, SMOKE_STATUS_OPTIONS } from "../../lib/request";
 import type { RequestDraft } from "../../lib/request";
 import { methodColor } from "../MethodBadge";
+import { Button } from "../ui/Button";
 
 interface SmokeResult {
   id: number;
@@ -77,19 +79,15 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
   const failed = smoke.filter((r) => results[r.id] && !results[r.id].ok).length;
 
   if (requests.length === 0) {
-    return <Centered text="Guarda una petición como smoke desde el constructor para empezar." />;
+    return <EmptyState text="Guarda una petición como smoke desde el constructor para empezar." />;
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1 }}>
       <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 12, padding: "8px 13px", borderBottom: "0.5px solid var(--border)" }}>
-        <button
-          onClick={() => void runSmoke()}
-          disabled={running || smoke.length === 0}
-          style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: "var(--radius-control)", border: "none", background: "var(--accent)", color: "var(--bg-app)", cursor: running || smoke.length === 0 ? "default" : "pointer", opacity: running || smoke.length === 0 ? 0.6 : 1 }}
-        >
+        <Button variant="primary" onClick={() => void runSmoke()} disabled={running || smoke.length === 0}>
           {running ? "Ejecutando…" : "Run smoke"}
-        </button>
+        </Button>
         <span className="mono" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{smoke.length} smoke</span>
         {(passed > 0 || failed > 0) && (
           <div style={{ display: "flex", gap: 10 }}>
@@ -124,7 +122,10 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
               <span className="mono" style={{ fontSize: 11, minWidth: 44, textAlign: "right", color: res ? (res.ok ? "var(--status-2xx)" : "var(--status-5xx)") : "var(--text-disabled)" }}>
                 {res ? (res.status ?? "ERR") : "—"}
               </span>
-              <button
+              <Button
+                variant="ghost"
+                title="Borrar"
+                style={{ padding: "3px 8px", fontSize: 11 }}
                 onClick={() =>
                   confirm({
                     title: "Borrar petición guardada",
@@ -133,11 +134,9 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
                     onConfirm: () => remove(r.id, serviceId),
                   })
                 }
-                title="Borrar"
-                style={{ fontFamily: "var(--font-mono)", fontSize: 11, padding: "3px 8px", borderRadius: "var(--radius-control)", border: "0.5px solid var(--border-control)", background: "transparent", color: "var(--text-faint)", cursor: "pointer" }}
               >
                 ✕
-              </button>
+              </Button>
             </div>
           );
         })}
@@ -146,10 +145,3 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
   );
 }
 
-function Centered({ text }: { text: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: 24, textAlign: "center" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>{text}</span>
-    </div>
-  );
-}

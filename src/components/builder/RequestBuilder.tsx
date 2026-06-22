@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import { useServicesStore } from "../../store/servicesStore";
+import { EmptyState } from "../ui/EmptyState";
+import { Button } from "../ui/Button";
+import { TabBar } from "../ui/TabBar";
 import { methodColor } from "../MethodBadge";
 import { RowsEditor } from "./RowsEditor";
 import { SchemaForm } from "./SchemaForm";
@@ -17,7 +20,7 @@ export function RequestBuilder() {
   const st = activeTabId ? tabStates[activeTabId] : null;
   const [saveOpen, setSaveOpen] = useState(false);
   if (!tab || !st) {
-    return <Centered text="Selecciona un endpoint en el árbol" />;
+    return <EmptyState text="Selecciona un endpoint en el árbol" />;
   }
 
   const op: Operation | undefined = specs[tab.serviceId]?.operations.find(
@@ -46,41 +49,23 @@ export function RequestBuilder() {
           <span style={{ color: "var(--text-secondary)" }}>{renderPath(tab.path, st.pathParams)}</span>
           <span style={{ color: "var(--text-faint)" }}>{renderQuery(st.query)}</span>
         </div>
-        <button
-          onClick={() => setSaveOpen(true)}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: "8px 14px", cursor: "pointer", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", fontSize: 12.5 }}
-        >
-          Guardar
-        </button>
-        <button
-          onClick={() => void send(tab.id)}
-          disabled={st.sending}
-          style={{ display: "flex", alignItems: "center", gap: 7, background: "var(--accent)", border: "none", borderRadius: "var(--radius-control)", padding: "8px 16px", cursor: st.sending ? "default" : "pointer", color: "var(--bg-app)", opacity: st.sending ? 0.7 : 1 }}
-        >
+        <Button variant="secondary" onClick={() => setSaveOpen(true)}>Guardar</Button>
+        <Button variant="primary" onClick={() => void send(tab.id)} disabled={st.sending}>
           {st.sending ? (
             <span style={{ width: 12, height: 12, border: "2px solid rgba(10,10,11,0.3)", borderTopColor: "var(--bg-app)", borderRadius: "50%", animation: "nala-spin 0.7s linear infinite" }} />
           ) : (
             <svg width="12" height="12" viewBox="0 0 14 14"><path d="M2.5 2L12 7L2.5 12V2Z" fill="var(--bg-app)" /></svg>
           )}
-          <span style={{ fontSize: 12.5, fontWeight: 600 }}>{st.sending ? "Enviando…" : "Enviar"}</span>
-        </button>
+          <span style={{ fontWeight: 600 }}>{st.sending ? "Enviando…" : "Enviar"}</span>
+        </Button>
       </div>
 
       {/* Pestañas del constructor */}
-      <div style={{ flex: "none", display: "flex", alignItems: "stretch", height: 33, padding: "0 12px", gap: 4, borderBottom: "0.5px solid var(--border-subtle)" }}>
-        {builderTabs.map((bt) => (
-          <div
-            key={bt.key}
-            onClick={() => patch(tab.id, { builderTab: bt.key })}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 9px", fontFamily: "var(--font-mono)", fontSize: 12, cursor: "pointer", color: st.builderTab === bt.key ? "var(--text-primary)" : "var(--text-faint)", borderBottom: `2px solid ${st.builderTab === bt.key ? "var(--accent)" : "transparent"}` }}
-          >
-            {bt.label}
-            {bt.badge != null && (
-              <span className="mono" style={{ fontSize: 9.5, color: "var(--bg-app)", background: "var(--accent)", borderRadius: 8, padding: "0 5px", fontWeight: 600 }}>{bt.badge}</span>
-            )}
-          </div>
-        ))}
-      </div>
+      <TabBar
+        tabs={builderTabs.map((bt) => ({ key: bt.key, label: bt.label, badge: bt.badge }))}
+        active={st.builderTab}
+        onSelect={(k) => patch(tab.id, { builderTab: k as BuilderTab })}
+      />
 
       {/* Mensaje de error de validación / red */}
       {st.error && (
@@ -206,10 +191,3 @@ function renderQuery(rows: { name: string; value: string; enabled: boolean }[]):
   return qs ? `?${qs}` : "";
 }
 
-function Centered({ text }: { text: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>{text}</span>
-    </div>
-  );
-}

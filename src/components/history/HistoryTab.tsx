@@ -4,6 +4,8 @@ import { useHistoryStore } from "../../store/historyStore";
 import { useConfirmStore } from "../../store/confirmStore";
 import { methodColor } from "../MethodBadge";
 import type { HistoryEntry } from "../../types/http";
+import { EmptyState } from "../ui/EmptyState";
+import { Button } from "../ui/Button";
 
 export function statusColor(status: number | null | undefined): string {
   if (status == null) return "var(--status-5xx)";
@@ -56,7 +58,9 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
         <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>{list.length} {list.length === 1 ? "ejecución" : "ejecuciones"}</span>
-        <button
+        <Button
+          variant="danger"
+          disabled={list.length === 0}
           onClick={() =>
             confirm({
               title: "Limpiar historial",
@@ -65,20 +69,16 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
               onConfirm: () => { setSelectedId(null); return clear(serviceId); },
             })
           }
-          disabled={list.length === 0}
-          style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "5px 11px", borderRadius: "var(--radius-control)", border: "0.5px solid var(--border-control)", background: "transparent", color: list.length === 0 ? "var(--text-disabled)" : "var(--status-5xx)", cursor: list.length === 0 ? "default" : "pointer" }}
         >
           Limpiar historial
-        </button>
+        </Button>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
         {/* Lista */}
         <div style={{ width: 300, flex: "none", overflowY: "auto", borderRight: "0.5px solid var(--border-subtle)" }}>
           {list.length === 0 ? (
-            <div style={{ padding: "24px 14px", textAlign: "center" }}>
-              <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Aún no hay ejecuciones para este servicio.</span>
-            </div>
+            <EmptyState text="Aún no hay ejecuciones para este servicio." />
           ) : (
             list.map((e) => (
               <HistoryRow key={e.id} entry={e} selected={e.id === selectedId} onClick={() => setSelectedId(e.id)} />
@@ -91,9 +91,7 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
           {selected ? (
             <HistoryDetail entry={selected} resending={resending} onResend={() => void onResend(selected)} />
           ) : (
-            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Selecciona una ejecución.</span>
-            </div>
+            <EmptyState text="Selecciona una ejecución." />
           )}
         </div>
       </div>
@@ -128,13 +126,9 @@ function HistoryDetail({ entry, resending, onResend }: { entry: HistoryEntry; re
             ? `Error: ${entry.error}`
             : "Error de red"} · {entry.timeMs} ms · {entry.sizeBytes} B
         </span>
-        <button
-          onClick={onResend}
-          disabled={resending}
-          style={{ flex: "none", marginLeft: 10, fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "5px 13px", borderRadius: "var(--radius-control)", border: "none", background: "var(--accent)", color: "var(--bg-app)", cursor: resending ? "default" : "pointer", opacity: resending ? 0.6 : 1 }}
-        >
+        <Button variant="primary" onClick={onResend} disabled={resending} style={{ flex: "none", marginLeft: 10 }}>
           {resending ? "Reenviando…" : "Reenviar"}
-        </button>
+        </Button>
       </div>
 
       <div style={sec}>REQUEST</div>
