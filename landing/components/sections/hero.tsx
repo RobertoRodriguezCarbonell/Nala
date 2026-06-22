@@ -1,8 +1,9 @@
-import { Download, GitBranch } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/reveal";
 import { AppMockup } from "@/components/app-mockup";
+import { GithubIcon } from "@/components/github-icon";
 import { LINKS } from "@/lib/content";
 
 export function Hero() {
@@ -23,7 +24,7 @@ export function Hero() {
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button href={LINKS.download} size="lg"><Download size={18} /> Descargar para Windows</Button>
-            <Button href={LINKS.github} variant="secondary" size="lg"><GitBranch size={18} /> Ver en GitHub</Button>
+            <Button href={LINKS.github} variant="secondary" size="lg"><GithubIcon size={18} /> Ver en GitHub</Button>
           </div>
         </Reveal>
 
