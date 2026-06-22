@@ -1,0 +1,81 @@
+---
+title: Importar desde OpenAPI
+description: Alta de servicio, fetch del spec, árbol de endpoints, refresco y snapshots.
+---
+
+# Importar desde OpenAPI
+
+Nala toma el contrato de tu API —el archivo `openapi.json` que FastAPI genera automáticamente— como punto de partida para construir toda la experiencia: el árbol de endpoints, los formularios de parámetros, el diff de esquemas y la generación de tipos. Este documento explica cómo dar de alta un servicio, qué ocurre durante la importación y cómo mantener el esquema actualizado.
+
+## El wizard de alta
+
+Para añadir un servicio nuevo abre la sidebar y haz clic en el botón **`+`** de la cabecera. Se abre el wizard **Añadir servicio · importa desde OpenAPI** con los siguientes campos:
+
+| Campo | Por defecto | Descripción |
+|---|---|---|
+| **Nombre del servicio** | — | El nombre visible en la sidebar. Usa un nombre que identifique la API, no el entorno (`Calclon API`, no `Calclon local`). |
+| **Grupo / proyecto** | — | Opcional. Agrupa varios servicios bajo el mismo epígrafe en la sidebar. |
+| **Ruta del spec** | `/openapi.json` | La ruta relativa desde la que descargar el spec. FastAPI la sirve en `/openapi.json` por defecto; cámbiala solo si tu API la expone en otra ruta. |
+| **Primer entorno** | `local` | El nombre del primer entorno que se creará junto con el servicio. |
+| **Base URL** | — | La URL raíz de la API en ese entorno, sin barra al final (p. ej. `http://localhost:8000`). |
+
+<Steps>
+<Step title="Rellena el formulario y pulsa Importar">
+Introduce el nombre del servicio, la URL base y, si procede, ajusta la ruta del spec o el nombre del entorno. Los demás campos son opcionales en esta fase.
+
+Una vez cumplimentados los campos obligatorios (nombre y URL base), el botón **Importar** se activa. Al pulsarlo, Nala hace un `GET` a `{baseUrl}{specPath}` —por ejemplo, `http://localhost:8000/openapi.json`— y muestra el estado **"Importando spec y leyendo endpoints…"** mientras procesa la respuesta.
+</Step>
+
+<Step title="Confirma el número de endpoints detectados">
+Si la descarga y el parseo tienen éxito, el wizard muestra la confirmación:
+
+> **{n} endpoints detectados**
+
+seguida de metadatos básicos del spec (título de la API, versión). Pulsa **Ver endpoints** para cerrar el wizard y ver el árbol en la sidebar.
+
+Si el spec no se puede importar —por ejemplo, porque la URL no responde o el JSON no es un OpenAPI válido— el wizard muestra el mensaje **"No se pudo importar"** junto con el detalle del error.
+</Step>
+
+<Step title="Explora el árbol de endpoints">
+El nuevo servicio aparece en la sidebar con sus endpoints agrupados por **tag** (la agrupación que FastAPI asigna a cada router). Cada endpoint muestra un badge de método coloreado (<MethodBadge method="GET" />, <MethodBadge method="POST" />, <MethodBadge method="PUT" />, <MethodBadge method="PATCH" />, <MethodBadge method="DELETE" />) y la ruta relativa.
+
+Haz clic en cualquier endpoint para abrirlo en el constructor del panel central.
+</Step>
+</Steps>
+
+<Callout type="warning">
+Si la importación falla con el mensaje **"No se pudo importar"**, las causas más habituales son que la API no esté corriendo en la URL indicada, que la ruta del spec no sea la correcta, o que el spec devuelva un JSON que no sea OpenAPI válido. Consulta la sección de resolución de problemas en la [FAQ](/docs/referencia-faq).
+</Callout>
+
+## Qué ocurre al importar: el snapshot
+
+Cada importación —y cada refresco manual— crea un **snapshot** del esquema. Un snapshot contiene:
+
+- El JSON raw del spec completo.
+- Metadatos extraídos: versión de OpenAPI (`3.0.x` o `3.1.x`), título de la API, versión de la API, número de endpoints detectados y la fecha y hora de la captura (`fetched_at`).
+
+Los endpoints y sus parámetros no se normalizan a tabla; se derivan del snapshot en memoria cada vez que los necesitas. Esto significa que el snapshot es siempre la fuente de verdad y no hay riesgo de desincronización entre lo que ves y lo que dice el esquema.
+
+Los snapshots son, además, la base del **diff de esquemas**: puedes comparar cualquier par de snapshots de un servicio para ver qué cambió entre versiones. Consulta [Diff de esquemas](/docs/guias-diff-esquemas) para el detalle.
+
+## Soporte de OpenAPI 3.0 y 3.1
+
+FastAPI moderno emite OpenAPI **3.1**, que tiene diferencias sustanciales respecto a 3.0: tipos nullables representados con `oneOf` en lugar de `nullable: true`, schemas de `$ref` con `description` propia, etc. Nala soporta ambas versiones; el motor Rust normaliza la diferencia de forma transparente, de modo que el constructor de peticiones y el generador de tipos funcionan igual con una API 3.0 y con una 3.1.
+
+Si el spec usa `$ref` para referenciar schemas compartidos (lo que hace siempre FastAPI), el motor los desreferencia antes de construir los formularios.
+
+## Refrescar el esquema
+
+Los servicios de desarrollo cambian con frecuencia. Para actualizar el árbol de endpoints de un servicio sin tener que eliminarlo y volver a importarlo, usa el botón **Refrescar** disponible en la cabecera del servicio en la sidebar o en el menú contextual del servicio.
+
+Cada refresco:
+1. Descarga de nuevo el spec desde la misma URL y ruta.
+2. Crea un **snapshot nuevo** con la fecha y hora actuales.
+3. Actualiza el árbol de endpoints en la sidebar.
+4. Deja el snapshot anterior disponible para hacer diff.
+
+El refresco es manual. Nala no descarga el spec en segundo plano de forma automática; esto garantiza que lo que ves en la sidebar es exactamente lo que tú decidiste importar y cuándo.
+
+<Callout type="info">
+Si tu API tiene breaking changes frecuentes, conviene refrescar antes de lanzar peticiones importantes. Después del refresco puedes ir a [Diff de esquemas](/docs/guias-diff-esquemas) para ver en un vistazo qué ha cambiado respecto a la versión anterior.
+</Callout>

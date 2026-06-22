@@ -1,0 +1,95 @@
+---
+title: Entornos y variables
+description: Entornos por servicio, variables con ámbito e interpolación {{var}}.
+---
+
+# Entornos y variables
+
+Una misma API tiene varias vidas a lo largo del día: la que corres en local mientras desarrollas, la de preview que el equipo de QA prueba, la de producción que sirve a los usuarios reales. Nala resuelve esto con **entornos por servicio**: cada servicio puede tener tantos entornos como necesites, y cambiar entre ellos es cuestión de un selector.
+
+Además de la URL base, los entornos se combinan con **variables** para compartir valores entre peticiones sin repetirlos a mano. Una variable como `{{apiVersion}}` o `{{customerId}}` puede aparecer en la URL, en los headers y en el body de cualquier petición; Nala la resuelve en tiempo de envío.
+
+## Entornos
+
+### Crear un entorno
+
+Cada servicio tiene al menos un entorno: el que creaste durante la importación (por defecto llamado `local`). Para añadir más, ve al selector de entorno en la barra superior —justo a la derecha del nombre del servicio activo— y elige **Gestionar entornos**.
+
+Los campos de un entorno son:
+- **Nombre** — etiqueta del destino (`local`, `preview`, `staging`, `prod`…).
+- **Base URL** — la URL raíz de la API en ese destino sin barra al final, por ejemplo `https://api.calclon.com`. De aquí se computa automáticamente la variable `{{baseUrl}}` para ese entorno.
+
+Al cambiar de entorno con el selector, todas las peticiones que lances a continuación usan la URL base y las credenciales del entorno elegido.
+
+### La variable `{{baseUrl}}`
+
+Cada entorno define su `base URL`, y Nala la inyecta automáticamente como la variable `{{baseUrl}}`. No tienes que crearla: existe en todos los entornos desde el momento en que introduces la URL base.
+
+En el constructor de peticiones, la URL de cada operación tiene la forma `{{baseUrl}}/ruta/del/endpoint`. Al enviar, Nala sustituye `{{baseUrl}}` por la URL base del entorno activo antes de hacer la petición.
+
+## Variables
+
+Las variables complementan los entornos cuando necesitas compartir valores que no son una URL. Son pares clave/valor con **ámbito**: el ámbito determina en qué contextos está disponible cada variable.
+
+### Ámbitos disponibles
+
+| Ámbito | Disponible en |
+|---|---|
+| **Global** | Todos los servicios y todos sus entornos |
+| **Servicio** | Todos los entornos de ese servicio |
+| **Entorno** | Solo el entorno concreto al que pertenece |
+
+La **regla de precedencia** es: entorno > servicio > global. Si una variable llamada `timeout` existe a nivel global con valor `30` y a nivel de entorno con valor `60`, Nala usa `60` cuando ese entorno está activo. La precedencia más estrecha siempre gana.
+
+Esta regla se muestra como recordatorio en el gestor de variables: **`{{var}} · entorno > servicio > global`**.
+
+### Crear y gestionar variables
+
+Abre el gestor **Variables** desde la barra lateral (el icono de engranaje o el menú del servicio) o desde el menú de entorno. El gestor muestra las variables agrupadas por ámbito.
+
+Para crear una variable:
+1. Elige el ámbito (global, servicio o entorno).
+2. Introduce el **nombre** (sin llaves) y el **valor**.
+3. Activa el flag **Secreto** si el valor no debe mostrarse en texto claro.
+
+Las variables marcadas como secreto aparecen en la lista con el valor redactado como `••••`. Se guardan cifradas en disco; consulta [Seguridad y datos](/docs/referencia-seguridad-datos) para los detalles del cifrado.
+
+## Interpolación `{{var}}`
+
+La sintaxis de interpolación es `{{nombreDeLaVariable}}`. Puedes usar espacios dentro de las llaves (`{{ nombreDeLaVariable }}` es equivalente). Nala resuelve las variables en el momento de enviar la petición, no al escribirlas, por lo que el preview en vivo de la URL del constructor muestra el valor real si la variable está definida.
+
+### Dónde funciona la interpolación
+
+La interpolación aplica en tres lugares:
+- **URL** — tanto en la parte base (`{{baseUrl}}`) como en path params y query string.
+- **Headers** — en el nombre y el valor de cualquier header personalizado.
+- **Body** — en el body JSON o en los campos de formulario.
+
+### Variables no resueltas
+
+Si usas una variable en una petición pero no está definida en ningún ámbito, Nala la deja tal cual: la cadena `{{variableInexistente}}` pasa al servidor sin sustituir. Esto no bloquea el envío pero sí provocará un error en la API si espera un valor real en ese campo.
+
+<Callout type="info">
+Para una referencia completa de la sintaxis de interpolación, incluyendo variables anidadas y casos especiales, consulta [Referencia: interpolación](/docs/referencia-interpolacion).
+</Callout>
+
+## Ejemplo práctico
+
+Supón que tienes una API con tres entornos. Defines estas variables:
+
+**Global:**
+- `apiVersion` = `v2`
+
+**Servicio `Calclon API`:**
+- `defaultPageSize` = `20`
+
+**Entorno `prod`:**
+- `customerId` = `cust_8821`
+
+Una petición con la URL `{{baseUrl}}/api/{{apiVersion}}/orders?page_size={{defaultPageSize}}&customer={{customerId}}` se resuelve en el entorno `prod` como:
+
+```
+https://api.calclon.com/api/v2/orders?page_size=20&customer=cust_8821
+```
+
+Si cambias al entorno `local`, `{{baseUrl}}` pasa a ser `http://localhost:8000` y, si `customerId` no está definida en `local`, la cadena `{{customerId}}` va al servidor sin resolver.

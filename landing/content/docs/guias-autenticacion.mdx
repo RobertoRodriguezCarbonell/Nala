@@ -1,0 +1,122 @@
+---
+title: Autenticación
+description: Bearer, API key, flujo de login, token cifrado y reauth.
+---
+
+# Autenticación
+
+Nala gestiona la autenticación en dos capas distintas que conviene entender antes de configurarla: la **estrategia** del servicio y el **secreto** del entorno.
+
+- La **estrategia** define *cómo* autenticarse: qué mecanismo usa la API (Bearer, API key, flujo de login). Esta configuración vive a nivel de servicio y es la misma para todos sus entornos.
+- El **secreto** es el dato concreto de ese entorno: el token Bearer del entorno de producción, la API key de staging, las credenciales de usuario de local. Cada entorno guarda su propio secreto, cifrado.
+
+Esta separación evita repetir la configuración del mecanismo en cada entorno y, al mismo tiempo, permite que cada entorno tenga sus propias credenciales de forma independiente.
+
+## El panel Auth
+
+El panel Auth —la pestaña **Auth** del constructor de peticiones— muestra dos secciones claramente diferenciadas:
+
+- **ESTRATEGIA · TODO EL SERVICIO** — aquí se configura la estrategia de autenticación que aplica a todas las peticiones del servicio.
+- **SECRETO · ENTORNO «{env}»** — aquí se introducen las credenciales concretas del entorno activo en ese momento. El nombre del entorno aparece en el título de la sección para que sea evidente qué entorno estás configurando.
+
+## Estrategias disponibles
+
+### Ninguna
+
+La estrategia **Ninguna** deshabilita la autenticación. Nala no inyecta ningún header ni parámetro de auth en las peticiones. Adecuada para APIs públicas o para endpoints que no requieren autenticación.
+
+### Bearer
+
+La estrategia **Bearer** inyecta un header `Authorization: Bearer {token}` en cada petición. En la sección de secreto del entorno introduces el valor del token directamente. Nala lo guarda cifrado y lo inyecta en la petición en Rust, sin que el valor pase por el webview.
+
+Esta estrategia es la más sencilla y cubre el caso de tokens de larga duración (tokens de API, tokens de desarrollo) que no caducan con frecuencia.
+
+### API key
+
+La estrategia **API key** inyecta una clave en cada petición. La configuración tiene dos campos:
+
+- **Nombre del parámetro** — el nombre del header o del query param que espera la API. El valor por defecto es `X-API-Key`.
+- **Ubicación** — elige entre **header** (la clave va como header HTTP) o **query** (la clave va como query param en la URL).
+
+En la sección de secreto del entorno introduces el valor de la API key. Nala la guarda cifrada.
+
+### Login
+
+La estrategia **Login** implementa un flujo de autenticación por credenciales: Nala hace una petición de login a la API, extrae el token de la respuesta y lo usa como Bearer en las peticiones posteriores. Es el mecanismo adecuado para APIs con autenticación basada en username/password y tokens de acceso de corta duración.
+
+La configuración de la estrategia Login tiene estos campos:
+
+| Campo | Por defecto | Descripción |
+|---|---|---|
+| Método | <MethodBadge method="POST" /> | Fijo; el endpoint de login siempre usa POST |
+| **Ruta** | `/auth/login` | La ruta del endpoint de login relativa a la base URL |
+| **Content-type** | `form` | El formato del body del login: **form** (`application/x-www-form-urlencoded`) o **json** (`application/json`) |
+| **Campo usuario** | `username` | El nombre del campo en el body que lleva el nombre de usuario |
+| **Campo clave** | `password` | El nombre del campo en el body que lleva la contraseña |
+| **Ruta del token** | `access_token` | La ruta en el JSON de respuesta donde está el token (p. ej. `access_token` accede a `response.access_token`) |
+| **Scheme** | `Bearer` | El scheme de autorización con el que se inyecta el token en las peticiones |
+
+#### Secreto del entorno en Login
+
+Con la estrategia Login, la sección de secreto del entorno pide:
+- **Usuario** — el nombre de usuario para ese entorno.
+- **Contraseña** — la contraseña para ese entorno.
+
+Ambos campos se guardan cifrados. Si activas **"Recordar credenciales (cifradas) para reauth automática"**, Nala los conserva para poder reautenticarse sin pedírtelos de nuevo cuando el token caduque.
+
+#### Estado del token
+
+Debajo de la configuración, Nala muestra el estado actual del token del entorno:
+
+- **"Token válido · caduca {fecha}"** — hay un token activo y la fecha de caducidad es conocida.
+- **"Token caducado"** — el token existía pero ya ha superado su fecha de caducidad.
+- **"Sin token"** — no hay token para este entorno; es necesario autenticarse.
+
+Nala infiere la caducidad del token a partir del campo `expires_in` de la respuesta del login o del claim `exp` del JWT. Si ninguno de los dos está presente, el token se considera sin caducidad y se mantiene indefinidamente hasta que uses **Olvidar**.
+
+Las acciones disponibles en este panel son:
+- **Autenticar** — lanza el flujo de login con las credenciales del entorno y guarda el token resultante.
+- **Olvidar** — elimina el token actual del entorno (y las credenciales, si estaban recordadas).
+
+<Callout type="info">
+Los tokens y las credenciales se guardan cifrados con AES-256-GCM. La clave de cifrado vive en el Windows Credential Manager y nunca toca disco en claro. Consulta [Seguridad y datos](/docs/referencia-seguridad-datos) para el detalle completo del modelo de cifrado.
+</Callout>
+
+## Reautenticación ante un 401
+
+Cuando la API devuelve un `401 Unauthorized`, Nala muestra un banner en el panel de respuesta:
+
+> **Sesión caducada (401)**
+
+El comportamiento a partir de aquí depende de si el entorno tiene credenciales recordadas:
+
+**Con credenciales recordadas:** El banner muestra el botón **Reautenticar**. Al pulsarlo, Nala ejecuta automáticamente el flujo de login con las credenciales guardadas, actualiza el token y reintenta la petición original sin que tengas que hacer nada más.
+
+**Sin credenciales recordadas:** El banner muestra un formulario de usuario y contraseña para que introduzcas las credenciales manualmente y pulses **Autenticar**. Tras el login exitoso, el token se guarda y la petición original se reintenta.
+
+## Configurar la autenticación paso a paso
+
+<Steps>
+<Step title="Elige la estrategia en la pestaña Auth">
+Abre el constructor de peticiones de cualquier endpoint del servicio y ve a la pestaña **Auth**. En la sección **ESTRATEGIA · TODO EL SERVICIO**, despliega el selector y elige la estrategia que usa tu API: **Ninguna**, **Bearer**, **API key** o **Login**.
+
+Recuerda que esta configuración afecta a todo el servicio, no solo a la petición actual.
+</Step>
+
+<Step title="Configura los parámetros de la estrategia">
+Si elegiste **API key**, establece el nombre del parámetro (por defecto `X-API-Key`) y la ubicación (header o query).
+
+Si elegiste **Login**, revisa y ajusta los campos de configuración del endpoint de login: ruta, content-type, nombres de los campos de usuario y contraseña, ruta del token y scheme. Los valores por defecto funcionan con la mayoría de APIs FastAPI con autenticación OAuth2 estándar (`/auth/login`, form, `username`, `password`, `access_token`, `Bearer`).
+</Step>
+
+<Step title="Introduce el secreto del entorno activo">
+En la sección **SECRETO · ENTORNO «{env}»**, introduce las credenciales del entorno activo:
+- Para **Bearer**: el valor del token.
+- Para **API key**: el valor de la clave.
+- Para **Login**: el usuario y la contraseña. Activa **"Recordar credenciales (cifradas) para reauth automática"** si quieres que Nala se reautentique solo cuando el token caduque.
+</Step>
+
+<Step title="Autentica si usas Login">
+Con la estrategia **Login**, pulsa **Autenticar** para ejecutar el flujo de login. El estado del token cambiará a **"Token válido · caduca {fecha}"** (o **"Token válido"** si no hay fecha de caducidad). A partir de este momento, todas las peticiones que lances llevarán el token inyectado automáticamente.
+</Step>
+</Steps>

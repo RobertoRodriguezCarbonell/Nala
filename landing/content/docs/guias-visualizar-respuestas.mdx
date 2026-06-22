@@ -1,0 +1,80 @@
+---
+title: Visualizar respuestas
+description: Status por color, tiempo, tamaño, headers y visor JSON.
+---
+
+# Visualizar respuestas
+
+Cuando lanzas una petición desde el constructor, el panel derecho de Nala muestra la respuesta completa: el código de status con su color identificativo, el tiempo de respuesta, el tamaño del cuerpo y el detalle del body y los headers. Para respuestas muy largas, el visor pagina el contenido para mantener la interfaz fluida.
+
+## La línea de status
+
+La primera línea del panel de respuesta resume el resultado de la petición con cuatro datos:
+
+- **Punto de color** — un indicador visual que cambia de color según la familia del status HTTP:
+  - <span style={{color: '#22c55e'}}>●</span> **Verde** — 2xx: éxito.
+  - <span style={{color: '#06b6d4'}}>●</span> **Cian** — 3xx: redirección.
+  - <span style={{color: '#f59e0b'}}>●</span> **Ámbar** — 4xx: error del cliente.
+  - <span style={{color: '#ef4444'}}>●</span> **Rojo** — 5xx: error del servidor.
+- **Código y texto** — el código HTTP y su descripción estándar, por ejemplo `200 OK` o `422 Unprocessable Entity`.
+- **Tiempo** — el tiempo transcurrido desde que se envió la petición hasta que se recibió el último byte de la respuesta, en milisegundos (p. ej. `143 ms`).
+- **Tamaño** — el tamaño del cuerpo de la respuesta. Se muestra en bytes para respuestas pequeñas y en KB a partir de 1024 bytes.
+
+## Toggle Body / Headers
+
+Debajo de la línea de status hay dos pestañas:
+
+- **Body** — el cuerpo de la respuesta, con resaltado de sintaxis si es JSON.
+- **Headers ({n})** — la lista de headers HTTP de la respuesta. El número entre paréntesis indica cuántos headers ha devuelto el servidor.
+
+### Visor de Body
+
+El cuerpo de la respuesta se muestra en un visor con:
+
+- **Resaltado de sintaxis JSON** — claves, valores, strings y números con colores diferenciados.
+- **Números de línea** — a la izquierda de cada línea, para navegar respuestas largas y referenciar líneas concretas.
+- **Botón Copiar** — copia el body completo al portapapeles. Mientras la copia está en curso muestra **"Copiado ✓"** brevemente y luego vuelve al estado normal.
+
+#### Paginación para respuestas largas
+
+Si el cuerpo de la respuesta supera **500 líneas**, el visor activa la paginación automáticamente. Los controles de paginación aparecen en la parte inferior del visor:
+
+```
+«  ‹  Página N / M  ›  »
+```
+
+- **`«`** — salta a la primera página.
+- **`‹`** — retrocede una página.
+- **Página N / M** — indica la página actual y el total de páginas.
+- **`›`** — avanza una página.
+- **`»`** — salta a la última página.
+
+Cada página muestra 500 líneas del cuerpo. Esta paginación mantiene la interfaz responsiva con respuestas de miles de líneas (arrays muy largos, dumps de datos, etc.) sin renderizar todo el contenido a la vez.
+
+### Visor de Headers
+
+La pestaña **Headers** muestra la lista completa de headers de la respuesta en una tabla de dos columnas: nombre del header y valor. Incluye todos los headers devueltos por el servidor, incluyendo `Content-Type`, `Content-Length`, CORS headers, cookies de sesión, etc.
+
+## Errores de red
+
+Si la petición no llega a recibir respuesta HTTP —porque la conexión falla o se agota el tiempo de espera— el panel de respuesta muestra un mensaje de error en lugar de la línea de status:
+
+- **"La petición superó el tiempo de espera"** — la petición tardó más de **60 segundos** sin recibir respuesta y fue cancelada. Comprueba que el servidor está corriendo y que no hay operaciones de larga duración que requieran un timeout mayor.
+- **"No se pudo conectar con el servidor"** — no se pudo establecer conexión TCP con el host de destino. Comprueba que la URL base del entorno activo es correcta y que el servidor está arrancado.
+- **"Petición no válida"** — la petición en sí tenía un problema (por ejemplo, una URL malformada) que impidió siquiera intentar la conexión.
+
+<Callout type="warning">
+El timeout de 60 segundos aplica a la petición completa, incluyendo el tiempo de conexión y la descarga del cuerpo. Si tienes endpoints que tardan más (generación de informes, procesos largos en background), considera si necesitas llamar al endpoint de forma asíncrona o usar un webhook en lugar de esperar la respuesta síncrona.
+</Callout>
+
+## Historial y redacción de cabeceras
+
+Cada petición que envías queda registrada automáticamente en el historial. El registro incluye el body y los headers de la respuesta, pero los **headers de autenticación** —`Authorization` y equivalentes— se guardan siempre redactados como `••••`. Esto garantiza que los tokens y API keys nunca quedan en claro en la base de datos, aunque el historial lo consulten otras personas con acceso a la máquina.
+
+Esta redacción es automática e irreversible: no hay forma de recuperar el valor real del header de auth desde el historial. Si necesitas el token, está disponible en la pestaña Auth del constructor del servicio.
+
+Desde el historial puedes **reenviar** cualquier petición pasada con un clic, lo que la carga de nuevo en el constructor con todos sus parámetros intactos. Consulta [Historial](/docs/guias-historial) para el detalle.
+
+<Callout type="info">
+Si la API devuelve un `401 Unauthorized`, el panel de respuesta muestra un banner especial de **"Sesión caducada (401)"** con opciones de reautenticación. Consulta [Autenticación](/docs/guias-autenticacion) para el detalle del flujo de reauth.
+</Callout>
