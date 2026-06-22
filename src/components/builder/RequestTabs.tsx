@@ -16,8 +16,8 @@ export function RequestTabs() {
             onClick={() => selectTab(t.id)}
             style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 10px 0 12px", borderRight: "0.5px solid var(--border)", cursor: "pointer", background: active ? "var(--bg-app)" : "transparent", maxWidth: 220, flex: "none" }}
           >
-            <span className="mono" style={{ fontSize: 9, fontWeight: 600, color: methodColor(t.method) }}>{t.method}</span>
-            <span className="mono" style={{ fontSize: 11.5, color: active ? "var(--text-primary)" : "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.path}</span>
+            <span className="mono" style={{ fontSize: "var(--text-nano)", fontWeight: 600, color: methodColor(t.method) }}>{t.method}</span>
+            <span className="mono" style={{ fontSize: "var(--text-xs)", color: active ? "var(--text-primary)" : "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.path}</span>
             <span
               onClick={(e) => { e.stopPropagation(); closeTab(t.id); }}
               style={{ display: "flex", opacity: 0.6 }}

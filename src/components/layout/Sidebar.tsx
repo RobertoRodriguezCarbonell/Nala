@@ -66,7 +66,7 @@ export function Sidebar() {
           borderBottom: "0.5px solid var(--border-subtle)",
         }}
       >
-        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+        <span style={{ fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.5px", textTransform: "uppercase" }}>
           Servicios
         </span>
         <div
@@ -82,8 +82,8 @@ export function Sidebar() {
 
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "4px 0" }}>
         {services.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: "40px 20px" }}>
-            <span className="mono" style={{ fontSize: 11, color: "var(--text-disabled)", textAlign: "center", lineHeight: "17px" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "var(--space-3)", padding: "40px 20px" }}>
+            <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)", textAlign: "center", lineHeight: "17px" }}>
               Aún no hay
               <br />
               servicios dados de alta
@@ -103,10 +103,10 @@ export function Sidebar() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 6,
+                    gap: "var(--space-2)",
                     padding: "5px 10px 5px 10px",
                     cursor: "pointer",
-                    fontSize: 12.5,
+                    fontSize: "var(--text-sm)",
                     color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-row-hover)"; setHoverId(svc.id); }}
@@ -157,7 +157,7 @@ export function Sidebar() {
                           </svg>
                         </span>
                       ) : (
-                        <span className="mono" style={{ fontSize: 10, color: "var(--text-disabled)", marginLeft: isActive ? 8 : "auto" }}>
+                        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-disabled)", marginLeft: isActive ? 8 : "auto" }}>
                           {ops.length}
                         </span>
                       )}
@@ -168,7 +168,7 @@ export function Sidebar() {
                 {menuId === svc.id && (
                   <div
                     onClick={(e) => e.stopPropagation()}
-                    style={{ position: "absolute", right: 8, top: 30, zIndex: 50, background: "var(--bg-raised)", border: "0.5px solid var(--border-strong)", borderRadius: 6, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", padding: 4, minWidth: 160 }}
+                    style={{ position: "absolute", right: 8, top: 30, zIndex: 50, background: "var(--bg-raised)", border: "0.5px solid var(--border-strong)", borderRadius: 6, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", padding: "var(--space-1)", minWidth: 160 }}
                   >
                     <div
                       onClick={() => {
@@ -181,7 +181,7 @@ export function Sidebar() {
                           onConfirm: () => removeService(svc.id),
                         });
                       }}
-                      style={{ padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--status-5xx)" }}
+                      style={{ padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--status-5xx)" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-row-hover)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
@@ -193,7 +193,7 @@ export function Sidebar() {
                 {isOpen && (
                   <div>
                     {spec === null && !loadingSpec[svc.id] && (
-                      <div className="mono" style={{ fontSize: 11, color: "var(--text-disabled)", padding: "5px 12px 5px 30px" }}>
+                      <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)", padding: "5px 12px 5px 30px" }}>
                         sin snapshot — refresca
                       </div>
                     )}
@@ -213,9 +213,9 @@ export function Sidebar() {
         )}
       </div>
 
-      <div style={{ flex: "none", borderTop: "0.5px solid var(--border-subtle)", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ flex: "none", borderTop: "0.5px solid var(--border-subtle)", padding: "7px 12px", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
         <div style={{ width: 6, height: 6, borderRadius: "50%", background: services.length ? "var(--status-2xx)" : "var(--text-disabled)" }} />
-        <span className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)" }}>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-faint)" }}>
           {services.length} servicio{services.length === 1 ? "" : "s"} · {totalEndpoints} endpoints
         </span>
       </div>
@@ -230,7 +230,7 @@ function EndpointRow({ op, selected, onSelect }: { op: Operation; selected: bool
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 8,
+        gap: "var(--space-3)",
         padding: "4px 12px 4px 30px",
         cursor: "pointer",
         background: selected ? "var(--bg-raised)" : "transparent",
@@ -243,7 +243,7 @@ function EndpointRow({ op, selected, onSelect }: { op: Operation; selected: bool
       <span
         className="mono"
         title={op.path}
-        style={{ fontSize: 11.5, color: selected ? "var(--text-primary)" : "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+        style={{ fontSize: "var(--text-xs)", color: selected ? "var(--text-primary)" : "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
       >
         {op.path}
       </span>

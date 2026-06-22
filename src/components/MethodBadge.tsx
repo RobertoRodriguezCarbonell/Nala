@@ -22,7 +22,7 @@ export function MethodBadge({ method, width = 42 }: { method: string; width?: nu
     <span
       className="mono"
       style={{
-        fontSize: 9.5,
+        fontSize: "var(--text-nano)",
         fontWeight: 600,
         width,
         flex: "none",

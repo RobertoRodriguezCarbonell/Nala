@@ -63,16 +63,16 @@ export function VariablesManager() {
       {/* Lista de variables */}
       <div style={{ maxHeight: "calc(80vh - 180px)", overflowY: "auto", margin: "0 -16px" }}>
         {variables.length === 0 ? (
-          <div className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)", padding: "20px", textAlign: "center" }}>
+          <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)", padding: "20px", textAlign: "center" }}>
             Aún no hay variables. Añade una abajo. <br />
             Recuerda: <span style={{ color: "var(--accent-var)" }}>{"{{baseUrl}}"}</span> ya existe por entorno.
           </div>
         ) : (
           variables.map((v) => (
             <div key={v.id} style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr 28px", alignItems: "center", gap: 8, padding: "7px 14px", borderBottom: "0.5px solid var(--border-row)" }}>
-              <span className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)" }}>{scopeLabel(v.scope)}</span>
-              <span className="mono" style={{ fontSize: 12, color: "var(--accent-var)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v.key}</span>
-              <span className="mono" style={{ fontSize: 12, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v.isSecret ? "••••" : v.value}</span>
+              <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-faint)" }}>{scopeLabel(v.scope)}</span>
+              <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--accent-var)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v.key}</span>
+              <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v.isSecret ? "••••" : v.value}</span>
               <span
                 onClick={() =>
                   confirm({

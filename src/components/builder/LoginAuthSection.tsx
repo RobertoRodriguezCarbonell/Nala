@@ -8,7 +8,7 @@ import { Button } from "../ui/Button";
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 10.5,
+  fontSize: "var(--text-micro)",
   color: "var(--text-faint)",
   letterSpacing: "0.5px",
 };
@@ -112,14 +112,14 @@ export function LoginAuthSection({
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={labelStyle}>LOGIN · TODO EL SERVICIO</div>
         <div style={{ display: "flex", gap: 8 }}>
-          <span className="mono" style={{ fontSize: 12, color: "var(--text-faint)", alignSelf: "center" }}>POST</span>
+          <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-faint)", alignSelf: "center" }}>POST</span>
           {cfgInput(path, (v) => saveCfg({ path: v }), "/auth/login")}
           <div style={{ display: "flex", background: "var(--bg-input)", border: "0.5px solid var(--border-control)", borderRadius: "var(--radius-control)", padding: 2 }}>
             {(["form", "json"] as const).map((ct) => (
               <div
                 key={ct}
                 onClick={() => saveCfg({ contentType: ct })}
-                style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, padding: "4px 11px", borderRadius: 4, cursor: "pointer", background: contentType === ct ? "var(--bg-raised)" : "transparent", color: contentType === ct ? "var(--text-primary)" : "var(--text-faint)" }}
+                style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "4px 11px", borderRadius: 4, cursor: "pointer", background: contentType === ct ? "var(--bg-raised)" : "transparent", color: contentType === ct ? "var(--text-primary)" : "var(--text-faint)" }}
               >
                 {ct}
               </div>
@@ -143,19 +143,19 @@ export function LoginAuthSection({
         </div>
 
         {!environmentId ? (
-          <div className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>
+          <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>
             Crea un entorno para autenticarte.
           </div>
         ) : (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="mono" style={{ fontSize: 12, color: token.color }}>{token.text}</span>
+              <span className="mono" style={{ fontSize: "var(--text-sm)", color: token.color }}>{token.text}</span>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <Input value={user} onChange={setUser} placeholder="usuario" style={{ flex: 1, minWidth: 0 }} />
               <Input type="password" value={pass} onChange={setPass} placeholder="clave" style={{ flex: 1, minWidth: 0 }} />
             </div>
-            <label className="mono" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, color: "var(--text-secondary)", cursor: "pointer" }}>
+            <label className="mono" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-xs)", color: "var(--text-secondary)", cursor: "pointer" }}>
               <Checkbox on={remember} onToggle={() => setRemember(!remember)} />
               Recordar credenciales (cifradas) para reauth automática
             </label>
@@ -169,7 +169,7 @@ export function LoginAuthSection({
               </Button>
               {status?.hasCredentials && (
                 <>
-                  <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>•••• credenciales recordadas</span>
+                  <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>•••• credenciales recordadas</span>
                   <Button
                     variant="danger"
                     style={{ padding: "4px 8px" }}
@@ -186,7 +186,7 @@ export function LoginAuthSection({
               )}
             </div>
             {err && (
-              <div className="mono" style={{ fontSize: 11.5, color: "var(--status-5xx)" }}>{err}</div>
+              <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--status-5xx)" }}>{err}</div>
             )}
           </>
         )}

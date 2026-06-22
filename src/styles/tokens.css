@@ -73,6 +73,7 @@
   --syntax-required: #f85149;
 
   /* --- Escala de tipografía --- */
+  --text-nano: 9px;
   --text-micro: 10.5px;
   --text-xs: 11.5px;
   --text-sm: 12.5px;

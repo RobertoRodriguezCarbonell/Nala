@@ -39,7 +39,7 @@ export function CenterPanel() {
               <HistoryTab serviceId={activeServiceId} />
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para ver el historial de su servicio.</span>
+                <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)" }}>Abre un endpoint para ver el historial de su servicio.</span>
               </div>
             )
           ) : serviceView === "types" ? (
@@ -47,7 +47,7 @@ export function CenterPanel() {
               <TypesTab serviceId={activeServiceId} />
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para generar los tipos de su servicio.</span>
+                <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)" }}>Abre un endpoint para generar los tipos de su servicio.</span>
               </div>
             )
           ) : serviceView === "diff" ? (
@@ -55,7 +55,7 @@ export function CenterPanel() {
               <DiffTab serviceId={activeServiceId} />
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint para comparar los snapshots de su servicio.</span>
+                <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)" }}>Abre un endpoint para comparar los snapshots de su servicio.</span>
               </div>
             )
           ) : serviceView === "smoke" ? (
@@ -63,7 +63,7 @@ export function CenterPanel() {
               <SmokeTab serviceId={activeServiceId} />
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Abre un endpoint del servicio para ver y ejecutar su smoke.</span>
+                <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)" }}>Abre un endpoint del servicio para ver y ejecutar su smoke.</span>
               </div>
             )
           ) : (
@@ -76,11 +76,11 @@ export function CenterPanel() {
       )}
 
       <div style={{ flex: "none", borderTop: "0.5px solid var(--border-subtle)", padding: "7px 14px", display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap" }}>
-        <span className="mono" style={{ fontSize: 10.5, color: "var(--text-disabled)" }}>{booting ? "arrancando…" : `apertura nº ${launchCount}`}</span>
-        <span className="mono" style={{ fontSize: 10.5, color: "var(--border)" }}>·</span>
-        <span className="mono" style={{ fontSize: 10.5, color: "var(--text-disabled)" }}>sqlite ✓</span>
-        <span className="mono" style={{ fontSize: 10.5, color: "var(--border)" }}>·</span>
-        <span className="mono" style={{ fontSize: 10.5, color: keyReady ? "var(--status-2xx)" : "var(--text-disabled)" }}>keychain {keyReady ? "✓" : "—"}</span>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-disabled)" }}>{booting ? "arrancando…" : `apertura nº ${launchCount}`}</span>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--border)" }}>·</span>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-disabled)" }}>sqlite ✓</span>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--border)" }}>·</span>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: keyReady ? "var(--status-2xx)" : "var(--text-disabled)" }}>keychain {keyReady ? "✓" : "—"}</span>
       </div>
     </div>
   );
@@ -93,8 +93,8 @@ function Onboarding({ onAdd }: { onAdd: () => void }) {
         <FolderIcon />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 360 }}>
-        <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>Da de alta tu primer servicio</span>
-        <span style={{ fontSize: 12.5, color: "var(--text-faint)", lineHeight: "19px" }}>
+        <span style={{ fontSize: "var(--text-lg)", fontWeight: 600, color: "var(--text-primary)" }}>Da de alta tu primer servicio</span>
+        <span style={{ fontSize: "var(--text-sm)", color: "var(--text-faint)", lineHeight: "19px" }}>
           Pega la URL de una API FastAPI y Nala importará sus endpoints desde el OpenAPI automáticamente.
         </span>
       </div>
@@ -105,7 +105,7 @@ function Onboarding({ onAdd }: { onAdd: () => void }) {
         onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
       >
         <PlusIcon color="var(--bg-app)" />
-        <span style={{ fontSize: 12.5, fontWeight: 600 }}>Añadir servicio</span>
+        <span style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>Añadir servicio</span>
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
-        <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>{list.length} {list.length === 1 ? "ejecución" : "ejecuciones"}</span>
+        <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>{list.length} {list.length === 1 ? "ejecución" : "ejecuciones"}</span>
         <Button
           variant="danger"
           disabled={list.length === 0}
@@ -105,21 +105,21 @@ function HistoryRow({ entry, selected, onClick }: { entry: HistoryEntry; selecte
       onClick={onClick}
       style={{ display: "grid", gridTemplateColumns: "48px 1fr auto", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "0.5px solid var(--border-row)", cursor: "pointer", background: selected ? "var(--bg-raised)" : "transparent" }}
     >
-      <span className="mono" style={{ fontSize: 11, fontWeight: 600, color: methodColor(entry.method) }}>{entry.method}</span>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pathOf(entry.url)}</span>
-      <span className="mono" style={{ fontSize: 11, color: statusColor(entry.status) }}>{entry.status ?? "ERR"}</span>
+      <span className="mono" style={{ fontSize: "var(--text-xs)", fontWeight: 600, color: methodColor(entry.method) }}>{entry.method}</span>
+      <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pathOf(entry.url)}</span>
+      <span className="mono" style={{ fontSize: "var(--text-xs)", color: statusColor(entry.status) }}>{entry.status ?? "ERR"}</span>
     </div>
   );
 }
 
 function HistoryDetail({ entry, resending, onResend }: { entry: HistoryEntry; resending: boolean; onResend: () => void }) {
-  const sec: CSSProperties = { fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--text-faint)", letterSpacing: "0.5px", padding: "10px 12px 4px" };
-  const pre: CSSProperties = { margin: 0, padding: "4px 12px 10px", fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--text-secondary)", whiteSpace: "pre-wrap", overflowWrap: "anywhere" };
+  const sec: CSSProperties = { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--text-faint)", letterSpacing: "0.5px", padding: "10px 12px 4px" };
+  const pre: CSSProperties = { margin: 0, padding: "4px 12px 10px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", whiteSpace: "pre-wrap", overflowWrap: "anywhere" };
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderBottom: "0.5px solid var(--border-subtle)" }}>
-        <span className="mono" style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11.5, color: statusColor(entry.status) }}>
+        <span className="mono" style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "var(--text-xs)", color: statusColor(entry.status) }}>
           {entry.status != null
             ? `${entry.status} ${entry.statusText}`
             : entry.error

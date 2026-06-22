@@ -90,14 +90,14 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
         <Button variant="primary" onClick={() => void runSmoke()} disabled={running || smoke.length === 0}>
           {running ? "Ejecutando…" : "Run smoke"}
         </Button>
-        <span className="mono" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{smoke.length} smoke</span>
+        <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>{smoke.length} smoke</span>
         {(passed > 0 || failed > 0) && (
           <div style={{ display: "flex", gap: 10 }}>
-            <span className="mono" style={{ fontSize: 11.5, color: "var(--status-2xx)" }}>{passed} verdes</span>
-            <span className="mono" style={{ fontSize: 11.5, color: failed > 0 ? "var(--status-5xx)" : "var(--text-faint)" }}>{failed} rojas</span>
+            <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--status-2xx)" }}>{passed} verdes</span>
+            <span className="mono" style={{ fontSize: "var(--text-xs)", color: failed > 0 ? "var(--status-5xx)" : "var(--text-faint)" }}>{failed} rojas</span>
           </div>
         )}
-        {notice && <span className="mono" style={{ fontSize: 11.5, color: "var(--status-4xx)" }}>{notice}</span>}
+        {notice && <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--status-4xx)" }}>{notice}</span>}
       </div>
 
       <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
@@ -106,23 +106,23 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
           return (
             <div key={r.id} style={{ display: "grid", gridTemplateColumns: "auto 56px 1fr auto auto auto", alignItems: "center", gap: 10, padding: "8px 13px", borderBottom: "0.5px solid var(--border-row)" }}>
               <Checkbox on={r.isSmoke} onToggle={() => void update(r.id, serviceId, r.name, !r.isSmoke, r.expectedStatus)} />
-              <span className="mono" style={{ fontSize: 11, fontWeight: 600, color: methodColor(r.method) }}>{r.method}</span>
+              <span className="mono" style={{ fontSize: "var(--text-xs)", fontWeight: 600, color: methodColor(r.method) }}>{r.method}</span>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                <div className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.path}</div>
+                <div style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                <div className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.path}</div>
               </div>
               <Select value={r.expectedStatus} onChange={(v) => void update(r.id, serviceId, r.name, r.isSmoke, v)}>
                 {SMOKE_STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </Select>
-              <span className="mono" style={{ fontSize: 11, minWidth: 44, textAlign: "right", color: res ? (res.ok ? "var(--status-2xx)" : "var(--status-5xx)") : "var(--text-disabled)" }}>
+              <span className="mono" style={{ fontSize: "var(--text-xs)", minWidth: 44, textAlign: "right", color: res ? (res.ok ? "var(--status-2xx)" : "var(--status-5xx)") : "var(--text-disabled)" }}>
                 {res ? (res.status ?? "ERR") : "—"}
               </span>
               <Button
                 variant="ghost"
                 title="Borrar"
-                style={{ padding: "3px 8px", fontSize: 11 }}
+                style={{ padding: "3px 8px", fontSize: "var(--text-xs)" }}
                 onClick={() =>
                   confirm({
                     title: "Borrar petición guardada",

@@ -71,15 +71,15 @@ export function DiffTab({ serviceId }: { serviceId: number }) {
     <div style={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1 }}>
       <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 10, padding: "8px 13px", borderBottom: "0.5px solid var(--border)" }}>
         <SnapshotSelect label="De" value={fromId} options={snapshots} onChange={setFromId} />
-        <span className="mono" style={{ fontSize: 12, color: "var(--text-faint)" }}>→</span>
+        <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-faint)" }}>→</span>
         <SnapshotSelect label="A" value={toId} options={snapshots} onChange={setToId} />
         <div style={{ flex: 1 }} />
         {diff && (
           <div style={{ display: "flex", gap: 10 }}>
-            <span className="mono" style={{ fontSize: 11.5, color: diff.breakingCount > 0 ? "var(--status-5xx)" : "var(--text-faint)" }}>
+            <span className="mono" style={{ fontSize: "var(--text-xs)", color: diff.breakingCount > 0 ? "var(--status-5xx)" : "var(--text-faint)" }}>
               {diff.breakingCount} breaking
             </span>
-            <span className="mono" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
+            <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
               {diff.nonBreakingCount} no-breaking
             </span>
           </div>
@@ -96,7 +96,7 @@ export function DiffTab({ serviceId }: { serviceId: number }) {
         ) : (
           groups.map((g) => (
             <div key={g.key} style={{ marginBottom: 6 }}>
-              <div className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)", padding: "4px 13px" }}>{g.key}</div>
+              <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)", padding: "4px 13px" }}>{g.key}</div>
               {g.changes.map((c, i) => (
                 <ChangeRow key={i} change={c} />
               ))}
@@ -134,9 +134,9 @@ function ChangeRow({ change }: { change: Change }) {
       <span
         style={{ flex: "none", width: 6, height: 6, borderRadius: "50%", background: change.breaking ? "var(--status-5xx)" : "var(--text-disabled)" }}
       />
-      <span style={{ fontSize: 12, color: change.breaking ? "var(--text-primary)" : "var(--text-secondary)" }}>{change.summary}</span>
+      <span style={{ fontSize: "var(--text-sm)", color: change.breaking ? "var(--text-primary)" : "var(--text-secondary)" }}>{change.summary}</span>
       {change.breaking && (
-        <span className="mono" style={{ fontSize: 10, color: "var(--status-5xx)", border: "0.5px solid var(--status-5xx)", borderRadius: 4, padding: "0 5px" }}>breaking</span>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--status-5xx)", border: "0.5px solid var(--status-5xx)", borderRadius: 4, padding: "0 5px" }}>breaking</span>
       )}
     </div>
   );
@@ -155,8 +155,8 @@ function SnapshotSelect({
 }) {
   return (
     <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <span className="mono" style={{ fontSize: 11, color: "var(--text-faint)" }}>{label}</span>
-      <Select value={String(value ?? "")} onChange={(v) => onChange(Number(v))} style={{ fontSize: 11.5 }}>
+      <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>{label}</span>
+      <Select value={String(value ?? "")} onChange={(v) => onChange(Number(v))} style={{ fontSize: "var(--text-xs)" }}>
         {options.map((s) => (
           <option key={s.id} value={s.id}>
             {(s.apiVersion ?? "—") + " · " + s.fetchedAt + " · " + s.endpointCount + " endpoints"}

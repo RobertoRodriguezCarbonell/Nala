@@ -16,7 +16,7 @@ const KINDS: { value: AuthKind; label: string }[] = [
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 10.5,
+  fontSize: "var(--text-micro)",
   color: "var(--text-faint)",
   letterSpacing: "0.5px",
 };
@@ -71,7 +71,7 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
               onClick={() => onKind(k.value)}
               style={{
                 fontFamily: "var(--font-mono)",
-                fontSize: 11.5,
+                fontSize: "var(--text-xs)",
                 padding: "5px 12px",
                 borderRadius: "var(--radius-control)",
                 cursor: "pointer",
@@ -111,7 +111,7 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
                   onClick={() => onApiKey(apiKeyName, loc)}
                   style={{
                     fontFamily: "var(--font-mono)",
-                    fontSize: 11.5,
+                    fontSize: "var(--text-xs)",
                     padding: "4px 11px",
                     borderRadius: 4,
                     cursor: "pointer",
@@ -133,12 +133,12 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
           <div style={labelStyle}>SECRETO · {env ? `ENTORNO «${env.name}»` : "SIN ENTORNO"}</div>
 
           {!env ? (
-            <div className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>
+            <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>
               Crea un entorno para guardar el secreto.
             </div>
           ) : status?.hasSecret && !editing ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="mono" style={{ fontSize: 12, color: "var(--accent)" }}>
+              <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--accent)" }}>
                 •••• configurado
               </span>
               <Button
@@ -200,7 +200,7 @@ export function AuthPanel({ serviceId }: { serviceId: number }) {
         />
       )}
 
-      <div className="mono" style={{ fontSize: 11, color: "var(--text-disabled)", lineHeight: "17px" }}>
+      <div className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)", lineHeight: "17px" }}>
         La estrategia aplica a todo el servicio; el secreto/credenciales son por entorno y se guardan cifrados.
       </div>
     </div>

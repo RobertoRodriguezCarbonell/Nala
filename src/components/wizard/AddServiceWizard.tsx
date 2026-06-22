@@ -57,8 +57,8 @@ export function AddServiceWizard() {
           justifyContent: "space-between",
         }}
       >
-        <span style={{ fontSize: 13.5, fontWeight: 600 }}>Añadir servicio</span>
-        <span className="mono" style={{ fontSize: 11, color: "var(--text-disabled)" }}>
+        <span style={{ fontSize: "var(--text-md)", fontWeight: 600 }}>Añadir servicio</span>
+        <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)" }}>
           importa desde OpenAPI
         </span>
       </div>
@@ -103,7 +103,7 @@ export function AddServiceWizard() {
               animation: "nala-spin 0.7s linear infinite",
             }}
           />
-          <span className="mono" style={{ fontSize: 12, color: "var(--text-faint)" }}>
+          <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-faint)" }}>
             importando spec y leyendo endpoints…
           </span>
         </div>
@@ -126,10 +126,10 @@ export function AddServiceWizard() {
               <path d="M4 10.5l4 4 8-9" stroke="var(--status-2xx)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>
+          <span style={{ fontSize: "var(--text-lg)", fontWeight: 600 }}>
             {count} endpoint{count === 1 ? "" : "s"} detectado{count === 1 ? "" : "s"}
           </span>
-          <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)", textAlign: "center" }}>
+          <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-faint)", textAlign: "center" }}>
             {name} está listo. Ya puedes verlos en el árbol.
           </span>
         </div>
@@ -137,11 +137,11 @@ export function AddServiceWizard() {
 
       {step === "error" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 0" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--status-5xx)" }}>No se pudo importar</span>
+          <span style={{ fontSize: "var(--text-md)", fontWeight: 600, color: "var(--status-5xx)" }}>No se pudo importar</span>
           <div
             className="mono"
             style={{
-              fontSize: 11.5,
+              fontSize: "var(--text-xs)",
               color: "var(--text-secondary)",
               background: "var(--bg-input)",
               border: "0.5px solid var(--border-input)",

@@ -2,6 +2,7 @@ import type { Schema } from "../../types/openapi";
 import { defaultForSchema, primaryType, typeHint } from "../../lib/schema";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+import { Toggle } from "../ui/Toggle";
 
 /**
  * Formulario generado desde el esquema normalizado. Recorre el `Schema` y mapea
@@ -82,11 +83,11 @@ function FieldRow({
       }}
     >
       <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
-        <span className="mono" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+        <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
           {name}
           {required && <span style={{ color: "var(--syntax-required)" }}> *</span>}
         </span>
-        <span className="mono" style={{ fontSize: 10, color: "var(--text-disabled)" }}>{typeHint(schema)}</span>
+        <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-disabled)" }}>{typeHint(schema)}</span>
       </div>
       <div style={{ padding: "7px 12px 7px 0" }}>
         <Control schema={schema} value={value} onChange={onChange} />
@@ -94,18 +95,6 @@ function FieldRow({
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  background: "var(--bg-input)",
-  border: "0.5px solid var(--border-input)",
-  borderRadius: "var(--radius-input)",
-  padding: "7px 10px",
-  fontFamily: "var(--font-mono)",
-  fontSize: 12,
-  color: "var(--text-secondary)",
-  outline: "none",
-  width: "100%",
-};
 
 function Control({
   schema,
@@ -137,21 +126,8 @@ function Control({
     const on = value === true;
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-        <div
-          onClick={() => onChange(!on)}
-          style={{
-            width: 32,
-            height: 18,
-            borderRadius: 9,
-            background: on ? "var(--accent)" : "var(--border-control)",
-            position: "relative",
-            cursor: "pointer",
-            transition: "background .12s",
-          }}
-        >
-          <div style={{ position: "absolute", top: 2, left: on ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "var(--bg-app)", transition: "left .12s" }} />
-        </div>
-        <span className="mono" style={{ fontSize: 12, color: "var(--syntax-bool)" }}>{String(on)}</span>
+        <Toggle on={on} onToggle={() => onChange(!on)} />
+        <span className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--syntax-bool)" }}>{String(on)}</span>
       </div>
     );
   }
@@ -211,12 +187,12 @@ function ArrayControl({
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {arr.map((item, i) => (
         <div key={i} style={{ display: "flex", alignItems: "start", gap: 6 }}>
-          <span className="mono" style={{ fontSize: 10, color: "var(--text-disabled)", width: 14, paddingTop: 8 }}>{i}</span>
+          <span className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-disabled)", width: 14, paddingTop: 8 }}>{i}</span>
           <div style={{ flex: 1 }}>
             {items ? (
               <Control schema={items} value={item} onChange={(v) => setAt(i, v)} />
             ) : (
-              <input style={inputStyle} value={String(item ?? "")} onChange={(e) => setAt(i, e.target.value)} />
+              <Input value={String(item ?? "")} onChange={(v) => setAt(i, v)} />
             )}
           </div>
           <span
@@ -231,7 +207,7 @@ function ArrayControl({
       ))}
       <div
         onClick={add}
-        style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent)", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: 11.5, paddingLeft: 20 }}
+        style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent)", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", paddingLeft: 20 }}
       >
         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 2.5v7M2.5 6h7" stroke="var(--accent)" strokeWidth="1.2" strokeLinecap="round" /></svg>
         añadir elemento

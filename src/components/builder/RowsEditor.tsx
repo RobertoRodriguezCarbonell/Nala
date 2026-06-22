@@ -6,7 +6,7 @@ const cellInput: React.CSSProperties = {
   border: "none",
   outline: "none",
   fontFamily: "var(--font-mono)",
-  fontSize: 12,
+  fontSize: "var(--text-sm)",
   color: "var(--text-secondary)",
   width: "100%",
   padding: "7px 10px",
@@ -23,8 +23,8 @@ export function RowsEditor({ rows, onChange }: { rows: Row[]; onChange: (rows: R
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 30px", borderBottom: "0.5px solid var(--border-subtle)" }}>
         <div />
-        <div className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)", padding: "7px 10px", letterSpacing: "0.5px" }}>NOMBRE</div>
-        <div className="mono" style={{ fontSize: 10.5, color: "var(--text-faint)", padding: "7px 10px", letterSpacing: "0.5px" }}>VALOR</div>
+        <div className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-faint)", padding: "7px 10px", letterSpacing: "0.5px" }}>NOMBRE</div>
+        <div className="mono" style={{ fontSize: "var(--text-micro)", color: "var(--text-faint)", padding: "7px 10px", letterSpacing: "0.5px" }}>VALOR</div>
         <div />
       </div>
 
@@ -53,7 +53,7 @@ export function RowsEditor({ rows, onChange }: { rows: Row[]; onChange: (rows: R
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 0" }}>
           <div style={{ width: 14, height: 14, borderRadius: 3, border: "1px dashed var(--border-strong)" }} />
         </div>
-        <div className="mono" style={{ fontSize: 12, color: "var(--text-disabled)", padding: "7px 10px" }}>añadir…</div>
+        <div className="mono" style={{ fontSize: "var(--text-sm)", color: "var(--text-disabled)", padding: "7px 10px" }}>añadir…</div>
       </div>
     </div>
   );
