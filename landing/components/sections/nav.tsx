@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LINKS } from "@/lib/content";
 
@@ -13,7 +14,7 @@ export function Nav() {
         <nav className="hidden items-center gap-7 text-sm text-fg-muted md:flex">
           <a href="#caracteristicas" className="hover:text-fg">Características</a>
           <a href="#como-funciona" className="hover:text-fg">Cómo funciona</a>
-          <a href="/docs" className="hover:text-fg">Docs</a>
+          <Link href="/docs" className="hover:text-fg">Docs</Link>
           <a href={LINKS.github} className="hover:text-fg">GitHub</a>
         </nav>
         <Button href={LINKS.download} size="md">Descargar</Button>

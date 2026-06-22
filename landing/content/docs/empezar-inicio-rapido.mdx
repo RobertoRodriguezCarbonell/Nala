@@ -1,0 +1,71 @@
+---
+title: Inicio rápido
+description: De cero a lanzar una petición y generar tipos en minutos.
+---
+
+# Inicio rápido
+
+Este tutorial te lleva desde una instalación limpia de Nala hasta lanzar tu primera petición y obtener los tipos TypeScript de tu API. El ejemplo usa `Calclon API` como nombre de servicio y `http://localhost:8000` como URL base; sustituye estos valores por los de tu propio backend.
+
+## Antes de empezar
+
+Asegúrate de que:
+- Nala está instalado y arranca sin errores (consulta [Instalación](/docs/empezar-instalacion) si no lo has hecho).
+- Tu API FastAPI está corriendo y su endpoint `/openapi.json` es accesible, por ejemplo en `http://localhost:8000/openapi.json`.
+
+## Pasos
+
+<Steps>
+<Step title="Añadir un servicio">
+En la barra lateral izquierda, haz clic en el botón **Añadir servicio** (el icono `+` en la cabecera de la sidebar). Se abre el wizard **Añadir servicio · importa desde OpenAPI**.
+
+Rellena los campos:
+
+| Campo | Valor de ejemplo | Notas |
+|---|---|---|
+| **Nombre del servicio** | `Calclon API` | El nombre visible en la sidebar |
+| **Grupo / proyecto** | `backend` | Opcional; agrupa servicios en la sidebar |
+| **Ruta del spec** | `/openapi.json` | Por defecto; cambia solo si tu API la sirve en otra ruta |
+| **Primer entorno** | `local` | El entorno que se creará junto con el servicio |
+| **Base URL** | `http://localhost:8000` | La URL raíz sin barra al final |
+
+Una vez rellenos, pulsa **Importar**. Nala hace un `GET` a `http://localhost:8000/openapi.json`, parsea el spec (OpenAPI 3.0 o 3.1) y muestra el mensaje de confirmación con el número de endpoints detectados.
+</Step>
+
+<Step title="Ver los endpoints">
+Tras la confirmación —por ejemplo, **"47 endpoints detectados"**— pulsa el botón **Ver endpoints**. El wizard se cierra y la sidebar muestra el nuevo servicio con sus endpoints agrupados por tag, cada uno con su badge de método (<MethodBadge method="GET" />, <MethodBadge method="POST" />, <MethodBadge method="PUT" />, etc.).
+
+Puedes expandir y colapsar los grupos de tags haciendo clic en el nombre del tag.
+</Step>
+
+<Step title="Lanzar una petición">
+Haz clic en cualquier endpoint de la sidebar. El panel central muestra el constructor de peticiones con las pestañas **Params**, **Body**, **Headers** y **Auth** ya completadas a partir del esquema.
+
+1. Revisa los campos de **Params** (path params y query string) y **Body** si el endpoint los tiene. Los campos obligatorios según el esquema aparecen marcados.
+2. Si el endpoint requiere autenticación, ve a la pestaña **Auth** y configura el token o las credenciales del entorno activo.
+3. Pulsa **Enviar**.
+
+El panel derecho muestra la respuesta: el código de status coloreado por familia (verde para 2xx, ámbar para 4xx, rojo para 5xx), el tiempo de respuesta, el tamaño y el body en JSON con pretty-print y números de línea.
+</Step>
+
+<Step title="Generar tipos TypeScript">
+Ve a la pestaña **Tipos TS** en la barra de pestañas superior del panel central (junto a **Endpoints**, **Diff** e **Historial**).
+
+- El modo por defecto, **Tipos**, muestra las interfaces TypeScript de todos los modelos del esquema.
+- Activa **Cliente** para obtener además las funciones de fetch tipadas para cada operación.
+
+Pulsa **Copiar** para copiar el código al portapapeles, o **Guardar…** para elegir una ruta y exportarlo a un archivo `.ts`.
+</Step>
+</Steps>
+
+## Siguientes pasos
+
+Con esto ya tienes el flujo básico de Nala funcionando. Para sacarle más partido:
+
+- Aprende a gestionar varios entornos y compartir variables entre ellos en [Entornos y variables](/docs/guias-entornos-variables).
+- Configura la autenticación Bearer, API key o flujo de login en [Autenticación](/docs/guias-autenticacion).
+- Compara versiones del esquema para detectar breaking changes en [Diff de esquemas](/docs/guias-diff-esquemas).
+
+<Callout type="tip">
+Si tienes varios backends FastAPI corriendo en localhost, prueba el **Descubrimiento de localhost**: Nala escanea puertos locales y detecta servicios activos automáticamente, ahorrándote el paso de introducir la URL a mano. Consulta [Descubrimiento de localhost](/docs/guias-descubrimiento-localhost).
+</Callout>

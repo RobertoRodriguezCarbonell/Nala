@@ -1,13 +1,55 @@
 ---
 title: Introducción
-description: Qué es Nala y para quién.
+description: Qué es Nala, para quién y qué resuelve.
 ---
 
 # Introducción
 
-Nala es un cliente de escritorio para Windows que centraliza, prueba y mantiene al día
-tus APIs FastAPI/OpenAPI, todo en local.
+Nala es un cliente de escritorio para Windows que centraliza, prueba y mantiene al día tus APIs FastAPI/OpenAPI. Diseñado para el desarrollador que ya tiene varios backends en marcha y necesita algo más que una pestaña de Swagger abierta en el navegador.
 
-## En una frase
+## Qué es
 
-Das de alta un servicio pegando su URL y Nala importa sus endpoints desde OpenAPI.
+Nala toma como punto de partida el contrato de tu API: el archivo `openapi.json` que FastAPI genera de forma automática. Das de alta un servicio con su nombre y URL base, y Nala descarga el spec, lo parsea en Rust y construye el árbol de endpoints al instante. No hay que crear peticiones a mano ni mantener colecciones sincronizadas con el código.
+
+Una vez importado el servicio puedes:
+
+- **Probar cualquier endpoint** desde un constructor que genera el formulario de parámetros, query string, headers y body directamente desde el esquema OpenAPI.
+- **Gestionar varios entornos** (local, preview, prod) por servicio, con sus propias URLs y credenciales, y usar variables interpoladas `{{var}}` para compartir valores entre ellos.
+- **Autenticarte** con Bearer estático, API key o un flujo de login completo sin salir de la app.
+- **Detectar breaking changes** comparando dos snapshots del esquema para saber qué cambió entre versiones y si rompe contratos.
+- **Generar tipos TypeScript** desde el esquema, con opción de generar también funciones de cliente tipadas, sin depender de herramientas Node externas.
+- **Automatizar smoke tests** marcando peticiones como smoke y ejecutándolas contra el entorno activo con un solo clic.
+- **Consultar el historial** de cada ejecución con los headers de autenticación redactados.
+
+Todo esto funciona de forma **local-first**: los datos viven en tu máquina en una base SQLite, no hay cuentas que crear ni datos que enviar a ningún servicio en la nube.
+
+## Para quién
+
+Nala está pensado para el desarrollador backend que mantiene varios servicios FastAPI propios y se encuentra constantemente saltando entre la Swagger UI, `curl` en el terminal y Postman. Conoce bien sus APIs, no necesita un entorno colaborativo ni colecciones complejas con scripts, pero sí quiere:
+
+- Un lugar único desde donde probar cualquiera de sus APIs sin configurar nada a mano.
+- Saber de inmediato si un cambio en el esquema rompe algo.
+- Tener los tipos TypeScript actualizados sin un paso extra en el pipeline.
+- Que los secretos y tokens se gestionen de forma segura, sin pegarlos en variables de entorno de la shell.
+
+Si eso suena familiar, Nala es para ti.
+
+## Qué puedes hacer
+
+Las funcionalidades principales de Nala están documentadas en las guías:
+
+- [Importar desde OpenAPI](/docs/guias-importar-openapi) — dar de alta un servicio y refrescar el esquema.
+- [Entornos y variables](/docs/guias-entornos-variables) — crear entornos local/preview/prod e interpolar `{{var}}`.
+- [Construir y enviar peticiones](/docs/guias-construir-peticiones) — el constructor de Params, Body, Headers y Auth.
+- [Autenticación](/docs/guias-autenticacion) — Bearer, API key y flujo de login.
+- [Visualizar respuestas](/docs/guias-visualizar-respuestas) — el visor de status, tiempo, tamaño y JSON.
+- [Diff de esquemas](/docs/guias-diff-esquemas) — comparar snapshots y detectar breaking changes.
+- [Tipos y cliente TypeScript](/docs/guias-tipos-cliente-ts) — generar interfaces y funciones de cliente desde el esquema.
+- [Smoke tests](/docs/guias-smoke-tests) — ejecutar peticiones marcadas como smoke y ver el resumen verde/rojo.
+- [Secuencias multi-paso](/docs/guias-secuencias) — encadenar peticiones extrayendo datos de la respuesta anterior.
+- [Descubrimiento de localhost](/docs/guias-descubrimiento-localhost) — detectar servicios activos en puertos locales.
+- [Historial](/docs/guias-historial) — consultar y reenviar ejecuciones pasadas.
+
+<Callout type="info">
+Si estás aquí por primera vez, el camino más rápido es [Inicio rápido](/docs/empezar-inicio-rapido): en unos minutos pasarás de cero a lanzar tu primera petición y generar los tipos TypeScript de tu API.
+</Callout>
