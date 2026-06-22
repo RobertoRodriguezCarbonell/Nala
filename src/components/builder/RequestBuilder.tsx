@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import { useServicesStore } from "../../store/servicesStore";
+import { EmptyState } from "../ui/EmptyState";
 import { methodColor } from "../MethodBadge";
 import { RowsEditor } from "./RowsEditor";
 import { SchemaForm } from "./SchemaForm";
@@ -17,7 +18,7 @@ export function RequestBuilder() {
   const st = activeTabId ? tabStates[activeTabId] : null;
   const [saveOpen, setSaveOpen] = useState(false);
   if (!tab || !st) {
-    return <Centered text="Selecciona un endpoint en el árbol" />;
+    return <EmptyState text="Selecciona un endpoint en el árbol" />;
   }
 
   const op: Operation | undefined = specs[tab.serviceId]?.operations.find(
@@ -206,10 +207,3 @@ function renderQuery(rows: { name: string; value: string; enabled: boolean }[]):
   return qs ? `?${qs}` : "";
 }
 
-function Centered({ text }: { text: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>{text}</span>
-    </div>
-  );
-}

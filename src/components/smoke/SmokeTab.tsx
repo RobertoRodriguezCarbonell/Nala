@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSavedRequestsStore } from "../../store/savedRequestsStore";
 import { useServicesStore } from "../../store/servicesStore";
 import { useConfirmStore } from "../../store/confirmStore";
+import { EmptyState } from "../ui/EmptyState";
 import { listVariables, sendRequest } from "../../lib/tauri";
 import { buildVarMap } from "../../lib/interpolate";
 import { buildHttpRequest, matchesExpected, SMOKE_STATUS_OPTIONS } from "../../lib/request";
@@ -77,7 +78,7 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
   const failed = smoke.filter((r) => results[r.id] && !results[r.id].ok).length;
 
   if (requests.length === 0) {
-    return <Centered text="Guarda una petición como smoke desde el constructor para empezar." />;
+    return <EmptyState text="Guarda una petición como smoke desde el constructor para empezar." />;
   }
 
   return (
@@ -146,10 +147,3 @@ export function SmokeTab({ serviceId }: { serviceId: number }) {
   );
 }
 
-function Centered({ text }: { text: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: 24, textAlign: "center" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>{text}</span>
-    </div>
-  );
-}

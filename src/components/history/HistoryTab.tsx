@@ -4,6 +4,7 @@ import { useHistoryStore } from "../../store/historyStore";
 import { useConfirmStore } from "../../store/confirmStore";
 import { methodColor } from "../MethodBadge";
 import type { HistoryEntry } from "../../types/http";
+import { EmptyState } from "../ui/EmptyState";
 
 export function statusColor(status: number | null | undefined): string {
   if (status == null) return "var(--status-5xx)";
@@ -76,9 +77,7 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
         {/* Lista */}
         <div style={{ width: 300, flex: "none", overflowY: "auto", borderRight: "0.5px solid var(--border-subtle)" }}>
           {list.length === 0 ? (
-            <div style={{ padding: "24px 14px", textAlign: "center" }}>
-              <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Aún no hay ejecuciones para este servicio.</span>
-            </div>
+            <EmptyState text="Aún no hay ejecuciones para este servicio." />
           ) : (
             list.map((e) => (
               <HistoryRow key={e.id} entry={e} selected={e.id === selectedId} onClick={() => setSelectedId(e.id)} />
@@ -91,9 +90,7 @@ export function HistoryTab({ serviceId }: { serviceId: number }) {
           {selected ? (
             <HistoryDetail entry={selected} resending={resending} onResend={() => void onResend(selected)} />
           ) : (
-            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>Selecciona una ejecución.</span>
-            </div>
+            <EmptyState text="Selecciona una ejecución." />
           )}
         </div>
       </div>

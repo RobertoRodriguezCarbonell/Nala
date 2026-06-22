@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import type { HttpResponse } from "../../types/http";
+import { EmptyState } from "../ui/EmptyState";
 
 function statusColor(status: number): string {
   if (status >= 500) return "var(--status-5xx)";
@@ -19,10 +20,10 @@ export function ResponseViewer() {
   const st = activeTabId ? tabStates[activeTabId] : null;
   const tab = tabs.find((t) => t.id === activeTabId) ?? null;
 
-  if (!tab || !st) return <Empty text="Lanza una petición para ver la respuesta" />;
-  if (st.sending) return <Spinner />;
+  if (!tab || !st) return <EmptyState text="Lanza una petición para ver la respuesta" />;
+  if (st.sending) return <EmptyState text="enviando petición…" spinner />;
   if (!st.response) {
-    return <Empty text={st.error ? "La petición falló — revisa el constructor" : "Lanza una petición para ver la respuesta"} />;
+    return <EmptyState text={st.error ? "La petición falló — revisa el constructor" : "Lanza una petición para ver la respuesta"} />;
   }
 
   const res = st.response;
@@ -191,19 +192,3 @@ function highlight(line: string): React.ReactNode[] {
   return nodes;
 }
 
-function Empty({ text }: { text: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>{text}</span>
-    </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, height: "100%" }}>
-      <div style={{ width: 26, height: 26, border: "2px solid var(--border)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "nala-spin 0.7s linear infinite" }} />
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-faint)" }}>enviando petición…</span>
-    </div>
-  );
-}

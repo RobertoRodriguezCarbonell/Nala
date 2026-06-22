@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { generateTypes, exportTypes } from "../../lib/tauri";
+import { EmptyState } from "../ui/EmptyState";
 
 /**
  * Pestaña "Tipos TS": genera las interfaces TypeScript de los modelos del
@@ -55,12 +56,12 @@ export function TypesTab({ serviceId }: { serviceId: number }) {
     }
   };
 
-  if (loading) return <Centered text="generando tipos…" />;
+  if (loading) return <EmptyState text="generando tipos…" />;
   if (error) {
     const noSnapshot = error.includes("snapshot") || error.includes("no encontrado");
-    return <Centered text={noSnapshot ? "Importa el servicio primero para generar sus tipos." : error} />;
+    return <EmptyState text={noSnapshot ? "Importa el servicio primero para generar sus tipos." : error} />;
   }
-  if (!code) return <Centered text="Sin tipos que mostrar." />;
+  if (!code) return <EmptyState text="Sin tipos que mostrar." />;
 
   const lines = code.split("\n");
 
@@ -98,10 +99,3 @@ function ToolBtn({ label, color, onClick }: { label: string; color?: string; onC
   );
 }
 
-function Centered({ text }: { text: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: 24, textAlign: "center" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>{text}</span>
-    </div>
-  );
-}

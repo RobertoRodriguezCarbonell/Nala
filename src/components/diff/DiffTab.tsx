@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listSnapshots, diffSnapshots } from "../../lib/tauri";
 import type { SnapshotMeta } from "../../lib/tauri";
 import type { SchemaDiff, Change } from "../../types/diff";
+import { EmptyState } from "../ui/EmptyState";
 
 /**
  * Pestaña "Diff de esquema": elige dos snapshots de un servicio y muestra los
@@ -59,10 +60,10 @@ export function DiffTab({ serviceId }: { serviceId: number }) {
   // Agrupar cambios por endpoint, con los breaking primero dentro de cada grupo.
   const groups = useMemo(() => groupChanges(diff?.changes ?? []), [diff]);
 
-  if (error) return <Centered text={error} />;
-  if (snapshots == null) return <Centered text="cargando snapshots…" />;
+  if (error) return <EmptyState text={error} />;
+  if (snapshots == null) return <EmptyState text="cargando snapshots…" />;
   if (snapshots.length < 2) {
-    return <Centered text="Refresca el servicio para crear otro snapshot y poder comparar." />;
+    return <EmptyState text="Refresca el servicio para crear otro snapshot y poder comparar." />;
   }
 
   return (
@@ -86,11 +87,11 @@ export function DiffTab({ serviceId }: { serviceId: number }) {
 
       <div style={{ flex: 1, overflow: "auto", minHeight: 0, padding: "8px 0" }}>
         {fromId === toId ? (
-          <Centered text="Elige dos snapshots distintos." />
+          <EmptyState text="Elige dos snapshots distintos." />
         ) : diff == null ? (
-          <Centered text="calculando diff…" />
+          <EmptyState text="calculando diff…" />
         ) : groups.length === 0 ? (
-          <Centered text="Sin cambios entre estos snapshots." />
+          <EmptyState text="Sin cambios entre estos snapshots." />
         ) : (
           groups.map((g) => (
             <div key={g.key} style={{ marginBottom: 6 }}>
@@ -170,10 +171,3 @@ function SnapshotSelect({
   );
 }
 
-function Centered({ text }: { text: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: 24, textAlign: "center" }}>
-      <span className="mono" style={{ fontSize: 11.5, color: "var(--text-disabled)" }}>{text}</span>
-    </div>
-  );
-}
