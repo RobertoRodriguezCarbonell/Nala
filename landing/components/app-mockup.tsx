@@ -11,6 +11,7 @@ import {
 } from "framer-motion";
 import { Lock, Search } from "lucide-react";
 import { MethodBadge } from "@/components/method-badge";
+import { BorderBeam } from "@/components/magicui/border-beam";
 
 /* ================================================================== */
 /* Datos del recorrido                                                 */
@@ -167,7 +168,8 @@ export function AppMockup() {
 
   return (
     <div ref={ref}>
-      <div className="flex h-[452px] flex-col overflow-hidden rounded-xl border border-border-strong bg-bg text-xs shadow-2xl shadow-black/50">
+      <div className="relative flex h-[452px] flex-col overflow-hidden rounded-xl border border-border-strong bg-bg text-xs shadow-2xl shadow-black/50">
+        <BorderBeam size={120} duration={9} />
         {/* Titlebar */}
         <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5">
           <span className="h-3 w-3 rounded-full bg-delete/80" />

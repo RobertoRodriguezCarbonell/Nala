@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/reveal";
 import { AppMockup } from "@/components/app-mockup";
 import { GithubIcon } from "@/components/github-icon";
+import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { LINKS } from "@/lib/content";
 
 export function Hero() {
@@ -13,7 +14,9 @@ export function Hero() {
       <div className="grid-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto max-w-6xl px-6 pb-20 pt-20 md:pt-28">
         <Reveal className="mx-auto max-w-3xl text-center">
-          <Badge className="mx-auto">Local-first · Windows · FastAPI / OpenAPI</Badge>
+          <Badge className="mx-auto">
+            <AnimatedShinyText>Local-first · Windows · FastAPI / OpenAPI</AnimatedShinyText>
+          </Badge>
           <h1 className="mt-6 text-balance text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
             Todas tus APIs FastAPI, en una sola herramienta de escritorio.
           </h1>

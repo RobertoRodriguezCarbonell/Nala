@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/reveal";
+import { BorderBeam } from "@/components/magicui/border-beam";
 
 const CLIENT_TS = `export function createClient(config: ClientConfig) {
   return {
@@ -28,11 +29,12 @@ export function Showcase() {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="overflow-hidden rounded-xl border border-border-strong bg-card">
+          <div className="relative overflow-hidden rounded-xl border border-border-strong bg-card">
             <div className="flex items-center gap-2 border-b border-border px-4 py-2.5 font-mono text-xs text-fg-faint">
               <span className="h-2.5 w-2.5 rounded-full bg-border-strong" /> cliente.ts
             </div>
             <pre className="overflow-x-auto p-4 font-mono text-[12px] leading-relaxed text-fg-muted">{CLIENT_TS}</pre>
+            <BorderBeam size={90} duration={8} delay={2} />
           </div>
         </Reveal>
       </div>
