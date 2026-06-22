@@ -8,6 +8,7 @@ import { HistoryTab } from "../history/HistoryTab";
 import { TypesTab } from "../types/TypesTab";
 import { DiffTab } from "../diff/DiffTab";
 import { SmokeTab } from "../smoke/SmokeTab";
+import { SequencesTab } from "../sequences/SequencesTab";
 import { FolderIcon, PlusIcon } from "../icons";
 
 /**
@@ -65,6 +66,14 @@ export function CenterPanel() {
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)" }}>Abre un endpoint del servicio para ver y ejecutar su smoke.</span>
+              </div>
+            )
+          ) : serviceView === "sequences" ? (
+            activeServiceId != null ? (
+              <SequencesTab serviceId={activeServiceId} />
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span className="mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-disabled)" }}>Abre un endpoint para ver las secuencias de su servicio.</span>
               </div>
             )
           ) : (
