@@ -19,6 +19,13 @@ export function opKey(op: Operation): string {
   return `${op.method} ${op.path}`;
 }
 
+/** Valores con los que prefijar el wizard al abrirlo desde el descubrimiento. */
+export interface WizardInitial {
+  name?: string;
+  baseUrl?: string;
+  specPath?: string;
+}
+
 interface ServicesState {
   services: Service[];
   environments: Record<number, Environment[]>;
@@ -31,12 +38,16 @@ interface ServicesState {
   selectedOpKey: string | null;
 
   wizardOpen: boolean;
+  wizardInitial: WizardInitial | null;
+  discoverOpen: boolean;
 
   /** Carga inicial: servicios + entornos + último spec de cada uno. */
   init: () => Promise<void>;
 
-  openWizard: () => void;
+  openWizard: (initial?: WizardInitial) => void;
   closeWizard: () => void;
+  openDiscover: () => void;
+  closeDiscover: () => void;
 
   toggleExpand: (serviceId: number) => void;
   selectService: (serviceId: number) => void;
@@ -65,6 +76,8 @@ export const useServicesStore = create<ServicesState>((set, get) => ({
   activeEnvironmentId: null,
   selectedOpKey: null,
   wizardOpen: false,
+  wizardInitial: null,
+  discoverOpen: false,
 
   init: async () => {
     const services = await listServices();
@@ -89,8 +102,10 @@ export const useServicesStore = create<ServicesState>((set, get) => ({
     });
   },
 
-  openWizard: () => set({ wizardOpen: true }),
-  closeWizard: () => set({ wizardOpen: false }),
+  openWizard: (initial) => set({ wizardOpen: true, wizardInitial: initial ?? null }),
+  closeWizard: () => set({ wizardOpen: false, wizardInitial: null }),
+  openDiscover: () => set({ discoverOpen: true }),
+  closeDiscover: () => set({ discoverOpen: false }),
 
   toggleExpand: (serviceId) =>
     set((s) => ({ expanded: { ...s.expanded, [serviceId]: !s.expanded[serviceId] } })),

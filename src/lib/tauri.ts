@@ -11,6 +11,7 @@ import type {
   VariableInput,
 } from "../types/http";
 import type { SavedRequest, SavedRequestInput } from "../types/saved";
+import type { Discovered } from "../types/discover";
 
 /**
  * Capa fina sobre los comandos de Tauri (backend Rust).
@@ -225,6 +226,12 @@ export function generateClient(serviceId: number): Promise<string> {
 
 export function exportClient(serviceId: number): Promise<boolean> {
   return invoke<boolean>("export_client", { serviceId });
+}
+
+// ---------- Descubrimiento de localhost ----------
+
+export function discoverLocalhost(): Promise<Discovered[]> {
+  return invoke<Discovered[]>("discover_localhost");
 }
 
 // ---------- Diff de esquemas ----------

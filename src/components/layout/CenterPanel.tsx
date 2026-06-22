@@ -20,6 +20,7 @@ export function CenterPanel() {
   const booting = useUiStore((s) => s.booting);
   const serviceView = useUiStore((s) => s.serviceView);
   const { services, openWizard } = useServicesStore();
+  const openDiscover = useServicesStore((s) => s.openDiscover);
   const activeServiceId = useRequestStore((s) => {
     const tab = s.tabs.find((t) => t.id === s.activeTabId);
     return tab?.serviceId ?? null;
@@ -29,7 +30,7 @@ export function CenterPanel() {
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", background: "var(--bg-app)", borderRight: "0.5px solid var(--border)" }}>
       {services.length === 0 ? (
         <div style={{ flex: 1, minHeight: 0 }}>
-          <Onboarding onAdd={openWizard} />
+          <Onboarding onAdd={() => openWizard()} onDiscover={openDiscover} />
         </div>
       ) : (
         <>
@@ -86,7 +87,7 @@ export function CenterPanel() {
   );
 }
 
-function Onboarding({ onAdd }: { onAdd: () => void }) {
+function Onboarding({ onAdd, onDiscover }: { onAdd: () => void; onDiscover: () => void }) {
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: 32, textAlign: "center" }}>
       <div style={{ width: 60, height: 60, borderRadius: 13, border: "0.5px solid var(--border-control)", background: "var(--bg-input)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -107,6 +108,13 @@ function Onboarding({ onAdd }: { onAdd: () => void }) {
         <PlusIcon color="var(--bg-app)" />
         <span style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>Añadir servicio</span>
       </div>
+      <span
+        onClick={onDiscover}
+        className="mono"
+        style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", cursor: "pointer", marginTop: 4 }}
+      >
+        o descubrir servicios locales
+      </span>
     </div>
   );
 }

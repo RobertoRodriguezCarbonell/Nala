@@ -6,6 +6,7 @@ import { CenterPanel } from "./components/layout/CenterPanel";
 import { ResponsePanel } from "./components/layout/ResponsePanel";
 import { ResizeHandle } from "./components/layout/ResizeHandle";
 import { AddServiceWizard } from "./components/wizard/AddServiceWizard";
+import { DiscoverModal } from "./components/discover/DiscoverModal";
 import { VariablesManager } from "./components/variables/VariablesManager";
 import { ConfirmModal } from "./components/common/ConfirmModal";
 import { useUiStore } from "./store/uiStore";
@@ -17,6 +18,7 @@ export default function App() {
   const serviceView = useUiStore((s) => s.serviceView);
   const initServices = useServicesStore((s) => s.init);
   const wizardOpen = useServicesStore((s) => s.wizardOpen);
+  const discoverOpen = useServicesStore((s) => s.discoverOpen);
   const variablesOpen = useVariablesStore((s) => s.open);
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function App() {
         )}
       </div>
       {wizardOpen && <AddServiceWizard />}
+      {discoverOpen && <DiscoverModal />}
       {variablesOpen && <VariablesManager />}
       <ConfirmModal />
     </div>

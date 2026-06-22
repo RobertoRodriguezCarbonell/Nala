@@ -10,16 +10,17 @@ type Step = "form" | "importing" | "done" | "error";
 export function AddServiceWizard() {
   const closeWizard = useServicesStore((s) => s.closeWizard);
   const addServiceWithImport = useServicesStore((s) => s.addServiceWithImport);
+  const wizardInitial = useServicesStore((s) => s.wizardInitial);
 
   const [step, setStep] = useState<Step>("form");
   const [error, setError] = useState<string>("");
   const [count, setCount] = useState(0);
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(wizardInitial?.name ?? "");
   const [group, setGroup] = useState("");
-  const [specPath, setSpecPath] = useState("/openapi.json");
+  const [specPath, setSpecPath] = useState(wizardInitial?.specPath ?? "/openapi.json");
   const [envName, setEnvName] = useState("local");
-  const [baseUrl, setBaseUrl] = useState("");
+  const [baseUrl, setBaseUrl] = useState(wizardInitial?.baseUrl ?? "");
 
   const canSubmit = name.trim() !== "" && baseUrl.trim() !== "" && envName.trim() !== "";
 
