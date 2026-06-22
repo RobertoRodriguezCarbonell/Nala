@@ -1,0 +1,19 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Nala: cara de bichon maltes blanco">
+  <rect width="512" height="512" rx="116" fill="#4f46e5"/>
+  <ellipse cx="166" cy="316" rx="60" ry="106" fill="#ffffff"/>
+  <ellipse cx="346" cy="316" rx="60" ry="106" fill="#ffffff"/>
+  <ellipse cx="170" cy="334" rx="34" ry="76" fill="#e9e9f6"/>
+  <ellipse cx="342" cy="334" rx="34" ry="76" fill="#e9e9f6"/>
+  <ellipse cx="156" cy="266" rx="30" ry="42" fill="#ffffff"/>
+  <ellipse cx="356" cy="266" rx="30" ry="42" fill="#ffffff"/>
+  <ellipse cx="256" cy="264" rx="126" ry="118" fill="#ffffff"/>
+  <ellipse cx="256" cy="158" rx="46" ry="34" fill="#ffffff"/>
+  <circle cx="211" cy="254" r="18" fill="#1c1c2b"/>
+  <circle cx="301" cy="254" r="18" fill="#1c1c2b"/>
+  <circle cx="205" cy="248" r="6" fill="#ffffff"/>
+  <circle cx="295" cy="248" r="6" fill="#ffffff"/>
+  <ellipse cx="256" cy="302" rx="22" ry="16" fill="#1c1c2b"/>
+  <path d="M256 318 v12" stroke="#1c1c2b" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M256 330 q -16 16 -32 2" stroke="#1c1c2b" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M256 330 q 16 16 32 2" stroke="#1c1c2b" stroke-width="5" stroke-linecap="round" fill="none"/>
+</svg>

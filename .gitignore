@@ -4,6 +4,8 @@ CLAUDE.md
 .mcp.json
 prompt-claude-design.md
 docs/superpowers/
+.superpowers/
+landing/AGENTS.md
 
 # --- Node / frontend ---
 node_modules/
