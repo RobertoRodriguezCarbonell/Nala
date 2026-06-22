@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,9 @@ export const metadata: Metadata = {
       "Centraliza, prueba y mantén al día tus APIs FastAPI. Local-first, para Windows.",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
   themeColor: "#0a0a0b",
 };
 
