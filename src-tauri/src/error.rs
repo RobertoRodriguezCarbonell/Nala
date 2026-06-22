@@ -19,8 +19,6 @@ pub enum AppError {
     #[error("no encontrado: {0}")]
     NotFound(String),
 
-    // Se usará en fases posteriores (validación, OpenAPI, HTTP).
-    #[allow(dead_code)]
     #[error("{0}")]
     Other(String),
 }
