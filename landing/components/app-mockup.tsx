@@ -276,7 +276,7 @@ function Sidebar({ scene }: { scene: Scene }) {
               {active && (
                 <motion.div
                   layoutId="sidebar-active"
-                  className="absolute inset-0 rounded-md border-l-2 border-accent bg-accent/10"
+                  className="absolute inset-0 rounded-md bg-accent/10"
                   transition={{ type: "spring", stiffness: 380, damping: 32 }}
                 />
               )}
