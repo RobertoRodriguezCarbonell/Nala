@@ -1,0 +1,84 @@
+---
+title: Historial
+description: Registro de ejecuciones con auth redactada y reenviar.
+---
+
+# Historial
+
+Nala registra automáticamente cada petición que lanzas desde el constructor. El historial te permite revisar peticiones pasadas, inspeccionar la respuesta que recibiste en un momento dado y reenviar cualquier entrada con un solo clic. Las cabeceras de autenticación se guardan siempre redactadas, nunca en claro.
+
+## La pestaña Historial
+
+Abre la pestaña **Historial** en la barra de pestañas del servicio activo. La cabecera de la pestaña muestra:
+
+- **{n} ejecuciones** — el número total de entradas del historial para este servicio.
+- **Limpiar historial** — elimina todas las entradas del historial del servicio. La acción pide confirmación antes de proceder.
+
+## La lista de entradas
+
+El panel izquierdo de la pestaña muestra la lista de ejecuciones en orden cronológico inverso (la más reciente primero). Cada entrada muestra:
+
+- Un **badge de método** coloreado (<MethodBadge method="GET" />, <MethodBadge method="POST" />, <MethodBadge method="PUT" />, <MethodBadge method="PATCH" />, <MethodBadge method="DELETE" />).
+- La **ruta** de la petición (relativa a la base URL).
+- El **status** de la respuesta, coloreado por familia: verde para 2xx, cian para 3xx, ámbar para 4xx, rojo para 5xx.
+
+Haz clic en cualquier entrada para ver su detalle en el panel derecho.
+
+## El detalle de una entrada
+
+El panel de detalle muestra la información completa de la ejecución seleccionada:
+
+### Resumen
+
+La línea superior del detalle muestra:
+
+- **{status} {texto}** — el código HTTP y su descripción, por ejemplo `200 OK` o `422 Unprocessable Entity`. Si la petición no llegó a recibir respuesta HTTP, aparece **Error de red** en lugar del status.
+- **{ms} ms** — el tiempo total de la petición en milisegundos.
+- **{bytes} B** — el tamaño del cuerpo de la respuesta en bytes.
+- **Reenviar** — carga la petición en el constructor con todos sus parámetros tal como se enviaron, lista para lanzarla de nuevo.
+
+### Sección REQUEST
+
+La sección REQUEST muestra lo que Nala envió:
+
+- **Método + URL completa** — el método HTTP y la URL con la base URL interpolada y los query params añadidos.
+- **Headers** — los headers enviados con la petición. Las cabeceras de autenticación (`Authorization`, `X-API-Key` y equivalentes) se guardan siempre como `••••`; el resto de headers se guardan verbatim.
+- **Body** — el cuerpo de la petición, si la había. Los cuerpos JSON se muestran con formato pretty-print.
+
+### Sección RESPONSE
+
+La sección RESPONSE muestra lo que Nala recibió:
+
+- **Headers** — los headers de respuesta devueltos por el servidor, en una tabla nombre/valor.
+- **Body** — el cuerpo de la respuesta, con resaltado de sintaxis si es JSON. Si la petición produjo un error de red (sin respuesta HTTP), muestra el mensaje de error en lugar del body.
+
+## Redacción de cabeceras de autenticación
+
+Nala redacta automáticamente las cabeceras de autenticación antes de guardarlas en el historial. Cualquier header cuyo nombre sea `Authorization`, `X-API-Key` u otro header reconocido como portador de credenciales se almacena como `••••` en lugar de su valor real.
+
+Esta redacción es automática, irreversible e incondicional: no hay configuración que la desactive y no hay forma de recuperar el valor real desde el historial. El token siempre estará disponible en el panel **Auth** del constructor del servicio si necesitas consultarlo.
+
+<Callout type="info">
+La redacción garantiza que incluso si alguien con acceso físico a la máquina abre la base de datos SQLite de Nala directamente, no encontrará tokens ni API keys en el historial. Para el modelo de seguridad completo —cifrado de secretos, clave en Windows Credential Manager, qué se guarda y qué no— consulta [Seguridad y datos](/docs/referencia-seguridad-datos).
+</Callout>
+
+## Reenviar una petición
+
+El botón **Reenviar** en el detalle de cualquier entrada carga esa petición en el constructor con exactamente los mismos parámetros con los que se lanzó originalmente: método, URL, query params, headers (excepto los de auth, que se reconstruyen a partir del token activo del entorno) y body.
+
+Esto es útil para:
+
+- **Reproducir un error** — si una petición falló con 422 o 500, puedes reenviarla después de corregir el endpoint o los datos para confirmar que el problema está resuelto.
+- **Explorar variaciones** — carga la petición del historial en el constructor, ajusta un parámetro y lánzala de nuevo para comparar resultados.
+- **Repetir una petición exitosa** — útil para peticiones GET de consulta que quieres volver a ejecutar sin construirlas de cero.
+
+<Callout type="warning">
+Las peticiones de mutación (POST, PUT, PATCH, DELETE) reenviadas desde el historial se ejecutan realmente contra el entorno activo. Antes de reenviar una petición que crea o modifica datos, asegúrate de que el entorno activo es el que quieres afectar.
+</Callout>
+
+## Qué no aparece en el historial
+
+Algunas ejecuciones no se registran en el historial por diseño:
+
+- **Ejecuciones de smoke test** — los smoke tests usan `skipHistory` para no contaminar el historial con las comprobaciones automáticas en lote. Si quieres ver el detalle de una petición smoke, lánzala manualmente desde el constructor.
+- **Peticiones de login del flujo de autenticación** — la petición interna de autenticación que Nala lanza al pulsar **Autenticar** o al hacer reauth automática no se registra. Solo se registran las peticiones que tú lanzas explícitamente desde el constructor.

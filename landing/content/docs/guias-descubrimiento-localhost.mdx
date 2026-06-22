@@ -1,0 +1,93 @@
+---
+title: Descubrimiento de localhost
+description: Detecta backends FastAPI locales y prefija el alta.
+---
+
+# Descubrimiento de localhost
+
+Si tienes varios backends FastAPI corriendo en local, el descubrimiento de localhost te ahorra buscar el puerto de cada uno: Nala escanea una lista de puertos comunes y muestra los servicios que encuentra, listos para importar con un solo clic.
+
+## Cómo funciona el escaneo
+
+Al abrir el modal de descubrimiento, Nala lanza peticiones en paralelo a todos los puertos de la lista. Por cada puerto, envía:
+
+```
+GET http://127.0.0.1:{puerto}/openapi.json
+```
+
+con un timeout de **400 ms**. Un puerto se considera activo con un servicio FastAPI si:
+
+1. La petición recibe respuesta con status **2xx**.
+2. El cuerpo de la respuesta es JSON válido con el campo `openapi` presente.
+
+Si ninguna de estas condiciones se cumple —porque el puerto está cerrado, el servidor no responde en 400 ms, o el JSON no tiene el campo `openapi`— el puerto se descarta silenciosamente.
+
+### Puertos que se sondean
+
+Nala sondea estos puertos en cada escaneo:
+
+| Puerto | Uso habitual |
+|---|---|
+| **8000** | Puerto por defecto de FastAPI / Uvicorn |
+| **8001** | Segunda instancia o servicio alternativo |
+| **8002** | Tercera instancia |
+| **8080** | Puerto HTTP alternativo habitual |
+| **5000** | Flask legacy o servicios Python varios |
+| **5001** | Variante de 5000 |
+| **3000** | Node.js / servicios frontend con API integrada |
+| **8888** | JupyterLab u otros servicios de datos |
+| **9000** | Servicios de administración o microservicios |
+
+## El modal de descubrimiento
+
+Abre el modal desde el botón **Descubrir** en la barra superior o en el menú de añadir servicio. El título del modal es **Descubrir servicios locales**.
+
+### Durante el escaneo
+
+Mientras las peticiones están en vuelo, el modal muestra el mensaje:
+
+> **escaneando puertos comunes…**
+
+El escaneo es rápido (acotado por el timeout de 400 ms por puerto), así que la espera es breve incluso si todos los puertos responden con timeout.
+
+### Si no se encuentran servicios
+
+Si ningún puerto responde con un OpenAPI válido, el modal muestra:
+
+> **No se encontraron servicios en los puertos comunes.**
+
+junto con el botón **Volver a escanear**, que relanza el escaneo inmediatamente. Útil si acabas de arrancar un servidor y quieres reintentar sin cerrar el modal.
+
+### Si se encuentran servicios
+
+Cada servicio detectado aparece como una tarjeta con:
+
+- **Título** — el valor del campo `info.title` del spec descargado.
+- **Resumen** — `{baseUrl} · v{versión} · {n} endpoints`, por ejemplo `http://127.0.0.1:8000 · v1.2.0 · 34 endpoints`.
+- **Botón "Añadir"** — abre el wizard de alta de servicio con el campo **Base URL** ya prellenado con la URL detectada y la ruta del spec como `/openapi.json`.
+
+## Importar desde el descubrimiento
+
+<Steps>
+<Step title="Abre el modal de descubrimiento">
+Haz clic en el botón **Descubrir** de la barra superior. El escaneo arranca automáticamente.
+</Step>
+
+<Step title="Revisa los servicios encontrados">
+Si hay servicios corriendo en los puertos sondeados, aparecen listados con su título, URL y número de endpoints. Tómate un momento para verificar que el servicio que quieres importar está en la lista y que la URL es la correcta.
+</Step>
+
+<Step title="Pulsa Añadir en el servicio que te interesa">
+Al pulsar **Añadir**, el modal se cierra y se abre el wizard de alta con la **Base URL** prellenada. Completa el **Nombre del servicio**, revisa el resto de campos si procede y pulsa **Importar** para finalizar el alta.
+
+A partir de aquí, el flujo es idéntico al de una importación manual: Nala descarga el spec, crea el snapshot y muestra el árbol de endpoints en la sidebar.
+</Step>
+</Steps>
+
+<Callout type="warning">
+El descubrimiento solo funciona con servicios que sirven `/openapi.json` desde `127.0.0.1`. Si tu servidor escucha en `0.0.0.0` pero no en `127.0.0.1`, o si la ruta del spec es diferente (por ejemplo `/api/openapi.json`), el escaneo no lo detectará. En ese caso, usa el wizard de alta manual con la URL y la ruta correctas.
+</Callout>
+
+<Callout type="info">
+El descubrimiento no guarda ningún resultado ni hace peticiones adicionales más allá del `GET /openapi.json` inicial. La tarjeta de cada servicio se construye con los datos del spec ya descargado durante el sondeo, así que cuando importas desde el descubrimiento Nala no necesita volver a descargar el spec: lo tiene en memoria desde el escaneo.
+</Callout>
