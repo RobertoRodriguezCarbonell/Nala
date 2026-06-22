@@ -3,6 +3,7 @@ import { useRequestStore } from "../../store/requestStore";
 import { useServicesStore } from "../../store/servicesStore";
 import { EmptyState } from "../ui/EmptyState";
 import { Button } from "../ui/Button";
+import { TabBar } from "../ui/TabBar";
 import { methodColor } from "../MethodBadge";
 import { RowsEditor } from "./RowsEditor";
 import { SchemaForm } from "./SchemaForm";
@@ -60,20 +61,11 @@ export function RequestBuilder() {
       </div>
 
       {/* Pestañas del constructor */}
-      <div style={{ flex: "none", display: "flex", alignItems: "stretch", height: 33, padding: "0 12px", gap: 4, borderBottom: "0.5px solid var(--border-subtle)" }}>
-        {builderTabs.map((bt) => (
-          <div
-            key={bt.key}
-            onClick={() => patch(tab.id, { builderTab: bt.key })}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 9px", fontFamily: "var(--font-mono)", fontSize: 12, cursor: "pointer", color: st.builderTab === bt.key ? "var(--text-primary)" : "var(--text-faint)", borderBottom: `2px solid ${st.builderTab === bt.key ? "var(--accent)" : "transparent"}` }}
-          >
-            {bt.label}
-            {bt.badge != null && (
-              <span className="mono" style={{ fontSize: 9.5, color: "var(--bg-app)", background: "var(--accent)", borderRadius: 8, padding: "0 5px", fontWeight: 600 }}>{bt.badge}</span>
-            )}
-          </div>
-        ))}
-      </div>
+      <TabBar
+        tabs={builderTabs.map((bt) => ({ key: bt.key, label: bt.label, badge: bt.badge }))}
+        active={st.builderTab}
+        onSelect={(k) => patch(tab.id, { builderTab: k as BuilderTab })}
+      />
 
       {/* Mensaje de error de validación / red */}
       {st.error && (
