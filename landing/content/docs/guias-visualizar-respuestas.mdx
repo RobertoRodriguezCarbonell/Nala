@@ -59,9 +59,9 @@ La pestaña **Headers** muestra la lista completa de headers de la respuesta en 
 
 Si la petición no llega a recibir respuesta HTTP —porque la conexión falla o se agota el tiempo de espera— el panel de respuesta muestra un mensaje de error en lugar de la línea de status:
 
-- **"La petición superó el tiempo de espera"** — la petición tardó más de **60 segundos** sin recibir respuesta y fue cancelada. Comprueba que el servidor está corriendo y que no hay operaciones de larga duración que requieran un timeout mayor.
-- **"No se pudo conectar con el servidor"** — no se pudo establecer conexión TCP con el host de destino. Comprueba que la URL base del entorno activo es correcta y que el servidor está arrancado.
-- **"Petición no válida"** — la petición en sí tenía un problema (por ejemplo, una URL malformada) que impidió siquiera intentar la conexión.
+- **"la petición superó el tiempo de espera"** — la petición tardó más de **60 segundos** sin recibir respuesta y fue cancelada. Comprueba que el servidor está corriendo y que no hay operaciones de larga duración que requieran un timeout mayor.
+- **"no se pudo conectar con el servidor"** — no se pudo establecer conexión TCP con el host de destino. Comprueba que la URL base del entorno activo es correcta y que el servidor está arrancado.
+- **"petición no válida"** — la petición en sí tenía un problema (por ejemplo, una URL malformada) que impidió siquiera intentar la conexión.
 
 <Callout type="warning">
 El timeout de 60 segundos aplica a la petición completa, incluyendo el tiempo de conexión y la descarga del cuerpo. Si tienes endpoints que tardan más (generación de informes, procesos largos en background), considera si necesitas llamar al endpoint de forma asíncrona o usar un webhook en lugar de esperar la respuesta síncrona.
