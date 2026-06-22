@@ -3,6 +3,7 @@ import { useRequestStore } from "../../store/requestStore";
 import { useServicesStore } from "../../store/servicesStore";
 import { EmptyState } from "../ui/EmptyState";
 import { Button } from "../ui/Button";
+import { Textarea } from "../ui/Textarea";
 import { TabBar } from "../ui/TabBar";
 import { methodColor } from "../MethodBadge";
 import { RowsEditor } from "./RowsEditor";
@@ -170,12 +171,10 @@ function BodySection({
       {st.bodyMode === "form" ? (
         <SchemaForm schema={schema} value={st.bodyForm} onChange={(v) => patch(tabId, { bodyForm: v })} />
       ) : (
-        <textarea
-          className="mono"
+        <Textarea
           value={st.bodyJson}
-          onChange={(e) => patch(tabId, { bodyJson: e.target.value })}
-          spellCheck={false}
-          style={{ width: "100%", minHeight: 260, background: "var(--bg-app)", border: "none", outline: "none", color: "var(--text-secondary)", fontSize: 12, lineHeight: "19px", padding: "10px 12px", resize: "vertical" }}
+          onChange={(v) => patch(tabId, { bodyJson: v })}
+          style={{ minHeight: 260 }}
         />
       )}
     </div>
