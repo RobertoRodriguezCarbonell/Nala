@@ -2,8 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { Sidebar } from "@/components/docs/sidebar";
+import { buildSearchIndex } from "@/lib/docs/search-index";
+import { Search } from "@/components/docs/search";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
+  const searchIndex = buildSearchIndex();
   return (
     <div className="min-h-screen">
       {/* Cabecera */}
@@ -15,9 +18,12 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
               Nala <span className="text-fg-faint">/ Docs</span>
             </span>
           </Link>
-          <Link href="/" className="ml-auto flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
-            <ArrowLeft size={15} /> Inicio
-          </Link>
+          <div className="ml-auto flex items-center gap-4">
+            <Search index={searchIndex} />
+            <Link href="/" className="flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
+              <ArrowLeft size={15} /> Inicio
+            </Link>
+          </div>
         </div>
       </header>
 
