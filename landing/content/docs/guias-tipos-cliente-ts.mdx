@@ -26,7 +26,7 @@ El diálogo **Guardar…** es el diálogo nativo de Windows, gestionado enterame
 
 El modo **Tipos** recorre todos los componentes del esquema (`components/schemas`) y genera una `interface` TypeScript por cada modelo. Los tipos se resuelven de forma recursiva: los campos que referencian otro modelo con `$ref` generan una referencia a la interfaz correspondiente, no un tipo en línea.
 
-Ejemplo de salida para un esquema con un modelo `Product` y un modelo `Category`:
+A modo ilustrativo, así se vería la salida para un esquema con un modelo `Product` y un modelo `Category` (el código real depende de los modelos de tu esquema):
 
 ```ts
 export interface Category {
@@ -65,7 +65,7 @@ Los campos marcados como `required` en el esquema aparecen sin `?`; los opcional
 
 El modo **Cliente** genera, además de las interfaces, un conjunto de funciones tipadas —una por operación del esquema— que envuelven `fetch` con los tipos correctos de entrada y salida. El cliente generado no tiene dependencias: solo usa la API estándar del navegador o de Node.
 
-Ejemplo de salida para las operaciones `GET /products` y `POST /products`:
+A modo ilustrativo, así se vería la salida para las operaciones `GET /products` y `POST /products` (el código real depende de las operaciones de tu esquema):
 
 ```ts
 export function createClient(baseUrl: string, token?: string) {
